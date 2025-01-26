@@ -12,7 +12,7 @@ class Settings {
 
     @TextProperty({
         name: "Spotify Token",
-        description: "A Spotify Account Access Token.",
+        description: "A Spotify Account Access Token.\n&cTokens expire every &4hour&c.",
         category: "Settings",
         placeholder: "Enter Token..",
     })
@@ -59,7 +59,7 @@ class Settings {
 
     constructor() {
         this.initialize(this);
-        // this.setCategoryDescription("Settings", "&7a");
+        this.setCategoryDescription("Settings", "&7A module by &atdarth &7and &2Github Copilot&7.");
     }
 }
 
