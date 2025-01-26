@@ -1,0 +1,18 @@
+
+[settings]
+	show_errors = true
+	spotify_token = ""
+	chat_prefix = "&8[&a&lSpot&2&oPlaying&8] &f"
+
+	[settings.other]
+		chat_prefix = "&8[&a&lSpot&2&oPlaying&8] &f"
+
+	[settings.configuration]
+		show_errors = true
+		hide_errors = true
+
+[now_playing]
+
+	[now_playing.configuration]
+		overlay_enabled = true
+
