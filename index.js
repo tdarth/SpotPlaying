@@ -10,9 +10,15 @@ let currentSongInfo = null;
 let lastUpdateTime = Date.now();
 let localProgress = 0;
 
-function displaySongInfo(songInfo) {
+let overlayX = -200; // Start off-screen
+let targetX = 5; // Target position when visible
+let animationSpeed = 5; // Speed of the sliding animation
+
+function displaySongInfo(songInfo, x) {
+    if (!songInfo) return; // Add null check
+
     const formattedTitle = `&f${songInfo.name}`;
-    const formattedArtist = songInfo.artists && songInfo.artists.length > 0 ? `&7${songInfo.artists.join(", ")}` : "Unknown Artist";
+    const formattedArtist = songInfo.artists && songInfo.artists.length > 0 ? `&7${songInfo.artists.join(", ")}` : "Local File";
 
     const currentProgress = Math.min(localProgress, songInfo.duration_ms);
     const minutes = Math.floor(currentProgress / 60000);
@@ -33,7 +39,7 @@ function displaySongInfo(songInfo) {
     const progressBarHeight = 5;
     const boxHeight = 3 * lineHeight + 2 * lineSpacing + padding * 2 + progressBarHeight + lineSpacing;
 
-    const boxX = 5;
+    const boxX = x;
     const boxY = 5;
 
     Renderer.drawRect(Renderer.color(0, 0, 0, 100), boxX, boxY, boxWidth, boxHeight);
@@ -60,7 +66,7 @@ function updateLocalProgress() {
         const elapsed = now - lastUpdateTime;
         localProgress += elapsed;
         lastUpdateTime = now;
-        if (localProgress >= currentSongInfo.duration_ms) {
+        if (localProgress >= currentSongInfo.duration_ms + 1000) {
             currentSongInfo = null;
         }
     }
@@ -82,7 +88,7 @@ function getSong() {
                 console.log(JSON.stringify(response.data));
                 currentSongInfo = response.data;
                 if (!currentSongInfo.artists || currentSongInfo.artists.length === 0 || currentSongInfo.artists[0] === "") {
-                    currentSongInfo.artists = ["Unknown Artist"];
+                    currentSongInfo.artists = ["Local File"];
                 }
                 localProgress = currentSongInfo.progress_ms;
                 lastUpdateTime = Date.now();
@@ -93,7 +99,7 @@ function getSong() {
         .catch(error => {
             currentSongInfo = null;
             if (error.isAxiosError) {
-                if (JSON.stringify(error.response.data, null, 2).includes("Invalid access token") || JSON.stringify(error.response.data, null, 2).includes("Only valid bearer authentication supported")) {
+                if (JSON.stringify(error.response.data, null, 2).includes("Invalid access token") || JSON.stringify(error.response.data, null, 2).includes("Only valid bearer authentication supported") || JSON.stringify(error.response.data, null, 2).includes("The access token expired,") || JSON.stringify(error.response.data, null, 2).includes("Unauthorized access")) {
                     if (Settings.showErrors) {
                         ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid Token. &4Please update your token. &7(/spotify).\n`);
                     } else {
@@ -101,9 +107,9 @@ function getSong() {
                     }
                 } else {
                     if (Settings.showErrors) {
-                        ChatLib.chat(`\n${Settings.chatPrefix}&cError while fetching Spotfiy data: &4${JSON.stringify(error.response.data, null, 2)}\n`);
+                        ChatLib.chat(`\n${Settings.chatPrefix}&cError while fetching Spotify data: &4${JSON.stringify(error.response.data, null, 2)}\n`);
                     } else {
-                        console.log(`\n${Settings.chatPrefix}&cError while fetching Spotfiy data: &4${JSON.stringify(error.response.data, null, 2)}\n`);
+                        console.log(`\n${Settings.chatPrefix}&cError while fetching Spotify data: &4${JSON.stringify(error.response.data, null, 2)}\n`);
                     }
                 }
             } else {
@@ -133,12 +139,30 @@ function pingApi() {
 register("renderOverlay", () => {
     updateLocalProgress();
     if (currentSongInfo && Settings.npEnabled) {
-        displaySongInfo(currentSongInfo);
+        if (overlayX < targetX) {
+            overlayX += animationSpeed;
+            if (overlayX > targetX) overlayX = targetX;
+        }
+    } else {
+        if (overlayX > -200) {
+            overlayX -= animationSpeed;
+            if (overlayX < -200) overlayX = -200;
+        }
+    }
+    if (overlayX > -200) {
+        displaySongInfo(currentSongInfo, overlayX);
     }
 });
 
-register("command", () => {
-    Settings.openGUI();
+register("command", (arg) => {
+    if (!arg) return Settings.openGUI();
+
+    arg = arg.toLowerCase();
+    
+    if (arg == "copy") {
+        ChatLib.chat(`${Settings.chatPrefix}&fCopied &7${currentSongInfo.name} &fto clipboard.`);
+        ChatLib.command(`ct copy ${currentSongInfo.name}`, true);
+    }
 }).setName("spotplaying").setAliases("spotifyplaying", "spot", "spotify", "playingspot", "playingspotify");
 
 pingApi();
