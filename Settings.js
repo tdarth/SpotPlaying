@@ -47,15 +47,100 @@ class Settings {
         Client.currentGui.close()
     }
 
+    // Developer
+
+    @TextProperty({
+        name: "API URL",
+        description: "&7The API URL used to fetch Spotify data.",
+        category: "Settings",
+        placeholder: "Enter Link..",
+        subcategory: "z Developer z"
+    })
+    apiUrl = "https://untitledapi.onrender.com/getplayingsong";
+
+    @TextProperty({
+        name: "API Key",
+        description: "&7The API Key used to fetch Spotify data.",
+        category: "Settings",
+        placeholder: "Enter Chat Prefix..",
+        subcategory: "z Developer z"
+    })
+    settingsApiKey = "5efd91ea85702905e17d2800bbb613bd";
+
+    @TextProperty({
+        name: "API Ping Rate",
+        description: "&7The time in milliseconds the API will be pinged at.",
+        category: "Settings",
+        placeholder: "Enter Chat Prefix..",
+        subcategory: "z Developer z"
+    })
+    apiPingRate = "10000";
+
     // Now Playing
+
+    // - Toggles -
 
     @CheckboxProperty({
         name: "Overlay Enabled",
         description: "&7Toggles if you are able to see Now Playing overlay.",
         category: "Now Playing",
-        subcategory: "Configuration"
+        subcategory: "- Toggles -"
     })
     npEnabled = true;
+
+    @CheckboxProperty({
+        name: "Progress Bar",
+        description: "&7Toggles if you are able to see the Progress Bar on the overlay.",
+        category: "Now Playing",
+        subcategory: "- Toggles -"
+    })
+    npProgressBar = true;
+
+    @CheckboxProperty({
+        name: "Open Spotify on Click",
+        description: "&7Toggles if you are able to open Spotify by clicking on the overlay.",
+        category: "Now Playing",
+        subcategory: "- Toggles -"
+    })
+    npHover = true;
+
+    // Configuration
+
+    @ColorProperty({
+        name: "Overlay Color",
+        description: "&7The background color of the overlay.",
+        category: "Now Playing",
+        subcategory: "Configuration"
+    })
+    npBGColor = new Color(0, 0, 0);
+
+    @ColorProperty({
+        name: "Progress Bar Color",
+        description: "&7The color of the progress bar.",
+        category: "Now Playing",
+        subcategory: "Configuration"
+    })
+    npBarColor = new Color(0, 0, 0);
+
+    @SliderProperty({
+        name: "Overlay Opacity",
+        description: "&7The opacity of the overlay.",
+        category: "Now Playing",
+        subcategory: "Configuration",
+        min: 0,
+        max: 255
+    })
+    npBGOpacity = 100;
+
+    @SliderProperty({
+        name: "Progress Bar Opacity",
+        description: "&7The opacity of the progress bar.",
+        category: "Now Playing",
+        subcategory: "Configuration",
+        min: 0,
+        max: 255
+    })
+    npBarOpacity = 200;
 
     constructor() {
         this.initialize(this);

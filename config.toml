@@ -2,17 +2,33 @@
 [settings]
 	show_errors = true
 	spotify_token = ""
-	chat_prefix = "&8[&a&lSpot&2&oPlaying&8] &f"
 
 	[settings.other]
 		chat_prefix = "&8[&a&lSpot&2&oPlaying&8] &f"
 
-	[settings.configuration]
-		show_errors = true
-		hide_errors = true
+	[settings.z_developer_z]
+		api_ping_rate = "10000"
+		api_url = "https://untitledapi.onrender.com/getplayingsong"
+		api_key = "5efd91ea85702905e17d2800bbb613bd"
 
 [now_playing]
 
+	[now_playing.-_toggles_-]
+		overlay_enabled = true
+		progress_bar = true
+		open_spotify_on_click = true
+
 	[now_playing.configuration]
 		overlay_enabled = true
+		overlay_color = "255,0,0,0"
+		overlay_opacity = 100
+		progress_bar_color = "255,46,255,0"
+		progress_bar_opacity = 200
+		progress_bar = true
+		open_spotify_on_click = true
+
+	[now_playing.toggles]
+		overlay_enabled = true
+		progress_bar = true
+		open_spotify_on_click = true
 
