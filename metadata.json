@@ -1,8 +1,8 @@
 {
   "name": "SpotPlaying",
   "creator": "tdarth",
-  "description": "Private module by tdarth that shows the current song playing in the Spotify app.",
-  "version": "1.0.3",
+  "description": "The all-in-one Spotify Integration for Minecraft.",
+  "version": "1.0.0",
   "entry": "index.js",
-  "requires": ["axios", "Vigilance", "PogData"]
+  "requires": ["Vigilance", "KeybindFix"]
 }

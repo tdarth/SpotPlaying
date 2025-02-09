@@ -1,29 +1,56 @@
+import { getVersion } from "./utils/getVersion";
 import { @Vigilant, @TextProperty, @ParagraphProperty, @ColorProperty, @ButtonProperty, @SwitchProperty, @ColorProperty, @CheckboxProperty, @SelectorProperty, @PercentSliderProperty, @SliderProperty, Color } from 'Vigilance';
 
-const metadata = FileLib.read("SpotPlaying", "metadata.json");
-const version = JSON.parse(metadata).version;
+const version = getVersion();
 
 @Vigilant("SpotPlaying", `§a§lSpot§2§oPlaying §f${version} §7by §btdarth`)
 
 class Settings {
-    npDragGui = new Gui();
-
     // Settings
 
     @TextProperty({
-        name: "Spotify Token",
-        description: "A Spotify Account Access Token.\n&cTokens expire every &4hour&c.",
+        name: "Discord Token",
+        description: "Your Discord account token. This allows the module to automatically generate Spotify Tokens when they expire.\n&cLeave blank if you want to disable.",
         category: "Settings",
         placeholder: "Enter Token..",
+        protected: true
     })
-    settingsSpotToken = "";
+    settingsDiscordToken = "";
 
-    @CheckboxProperty({
-        name: "Show Errors",
-        description: "&7Toggles if errors are displayed in chat.",
+    @TextProperty({
+        name: "Spotify User ID",
+        description: "Your Spotify account ID. This allows the module to automatically generate Spotify Tokens when they expire.\n&cLeave blank if you want to disable.",
         category: "Settings",
+        placeholder: "Enter User ID..",
+        protected: true
     })
-    showErrors = true;
+    settingsSpotifyUserId = "";
+
+    @TextProperty({
+        name: "Spotify Token",
+        description: "&8Only edit if you know what you are doing.",
+        category: "Settings",
+        placeholder: "Enter Token..",
+        protected: true
+    })
+    settingsPremiumSpotToken = "";
+
+    @TextProperty({
+        name: "Spotify Device ID",
+        description: "&8Only edit if you know what you are doing.",
+        category: "Settings",
+        placeholder: "Enter ID..",
+        protected: true
+    })
+    settingsDeviceID = "";
+
+    @TextProperty({
+        name: "API Ping Rate",
+        description: "&7The time in milliseconds the API will be pinged at.\n&8A lower value may get you rate limited.",
+        category: "Settings",
+        placeholder: "Enter Number..",
+    })
+    apiPingRate = "5000";
 
     @TextProperty({
         name: "Chat Prefix",
@@ -47,35 +74,6 @@ class Settings {
         Client.currentGui.close()
     }
 
-    // Developer
-
-    @TextProperty({
-        name: "API URL",
-        description: "&7The API URL used to fetch Spotify data.",
-        category: "Settings",
-        placeholder: "Enter Link..",
-        subcategory: "z Developer z"
-    })
-    apiUrl = "https://untitledapi.onrender.com/getplayingsong";
-
-    @TextProperty({
-        name: "API Key",
-        description: "&7The API Key used to fetch Spotify data.",
-        category: "Settings",
-        placeholder: "Enter Chat Prefix..",
-        subcategory: "z Developer z"
-    })
-    settingsApiKey = "5efd91ea85702905e17d2800bbb613bd";
-
-    @TextProperty({
-        name: "API Ping Rate",
-        description: "&7The time in milliseconds the API will be pinged at.",
-        category: "Settings",
-        placeholder: "Enter Chat Prefix..",
-        subcategory: "z Developer z"
-    })
-    apiPingRate = "10000";
-
     // Now Playing
 
     // - Toggles -
@@ -86,7 +84,7 @@ class Settings {
         category: "Now Playing",
         subcategory: "- Toggles -"
     })
-    npEnabled = true;
+    npEnabled = false;
 
     @CheckboxProperty({
         name: "Progress Bar",
@@ -95,6 +93,22 @@ class Settings {
         subcategory: "- Toggles -"
     })
     npProgressBar = true;
+
+    @CheckboxProperty({
+        name: "Progress Bar Seek",
+        description: "&7Toggles if clicking a spot in the progress bar updates the song time.",
+        category: "Now Playing",
+        subcategory: "- Toggles -"
+    })
+    npSeekBar = true;
+
+    @CheckboxProperty({
+        name: "Pause/Play Button",
+        description: "&7Toggles if you are able to pause/play the current song on the overlay.",
+        category: "Now Playing",
+        subcategory: "- Toggles -"
+    })
+    npPauseButton = true;
 
     @CheckboxProperty({
         name: "Open Spotify on Click",
@@ -106,11 +120,30 @@ class Settings {
 
     // Configuration
 
+    @TextProperty({
+        name: "Song Title Text",
+        description: "Use the placeholder &f{song} &7to replace itself with the playing song.",
+        category: "Now Playing",
+        placeholder: "Enter Text..",
+        subcategory: "Configuration"
+    })
+    npSettingsSong = "{song}";
+
+    @TextProperty({
+        name: "Artist Title Text",
+        description: "Use the placeholder &f{artist} &7to replace itself with the artist of the playing song.",
+        category: "Now Playing",
+        placeholder: "Enter Text..",
+        subcategory: "Configuration"
+    })
+    npSettingsArtist = "&7{artist}";
+
     @ColorProperty({
         name: "Overlay Color",
         description: "&7The background color of the overlay.",
         category: "Now Playing",
-        subcategory: "Configuration"
+        subcategory: "Configuration",
+        allowAlpha: false
     })
     npBGColor = new Color(0, 0, 0);
 
@@ -118,7 +151,8 @@ class Settings {
         name: "Progress Bar Color",
         description: "&7The color of the progress bar.",
         category: "Now Playing",
-        subcategory: "Configuration"
+        subcategory: "Configuration",
+        allowAlpha: false
     })
     npBarColor = new Color(0, 0, 0);
 
@@ -142,8 +176,35 @@ class Settings {
     })
     npBarOpacity = 200;
 
+    @TextProperty({
+        name: "Pause Symbol",
+        description: "Sets the text of the pause button. &8Leave blank for default.",
+        category: "Now Playing",
+        placeholder: "Enter Text..",
+        subcategory: "Configuration"
+    })
+    npPauseSymbol = "││";
+
+    @TextProperty({
+        name: "Play Symbol",
+        description: "Sets the text of the play button. &8Leave blank for default.",
+        category: "Now Playing",
+        placeholder: "Enter Text..",
+        subcategory: "Configuration"
+    })
+    npPlaySymbol = "➤";
+
+    @CheckboxProperty({
+        name: "Text Shadows",
+        description: "&7Toggles if the text in the overlay has shadows.",
+        category: "Now Playing",
+        subcategory: "Configuration"
+    })
+    npTextShadow = true;
+
     constructor() {
         this.initialize(this);
+        this.setCategoryDescription("Instructions", "&a&lSpot&r&2&oPlaying\n&8Thank you for installing!\n\n&7This module has a complicated-ish setup progress.\nPlease click the button below for instructions.");
         this.setCategoryDescription("Settings", "&7A module by &atdarth &7and &2Github Copilot&7.");
     }
 }

@@ -1,34 +1,31 @@
 
 [settings]
-	show_errors = true
+	api_ping_rate = "5000"
+	spotify_user_id = ""
+	discord_token = ""
 	spotify_token = ""
+	spotify_device_id = ""
 
 	[settings.other]
 		chat_prefix = "&8[&a&lSpot&2&oPlaying&8] &f"
 
-	[settings.z_developer_z]
-		api_ping_rate = "10000"
-		api_url = "https://untitledapi.onrender.com/getplayingsong"
-		api_key = "5efd91ea85702905e17d2800bbb613bd"
-
 [now_playing]
 
 	[now_playing.-_toggles_-]
-		overlay_enabled = true
+		overlay_enabled = false
+		"pause/play_button" = true
+		progress_bar_seek = true
 		progress_bar = true
 		open_spotify_on_click = true
 
 	[now_playing.configuration]
-		overlay_enabled = true
+		song_title_text = "{song}"
+		text_shadows = true
 		overlay_color = "255,0,0,0"
 		overlay_opacity = 100
-		progress_bar_color = "255,46,255,0"
+		artist_title_text = "&7{artist}"
+		progress_bar_color = "255,0,255,13"
 		progress_bar_opacity = 200
-		progress_bar = true
-		open_spotify_on_click = true
-
-	[now_playing.toggles]
-		overlay_enabled = true
-		progress_bar = true
-		open_spotify_on_click = true
+		play_symbol = "➤"
+		pause_symbol = "││"
 

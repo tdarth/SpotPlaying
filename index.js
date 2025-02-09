@@ -1,26 +1,36 @@
 import Settings from "./Settings";
-import { request } from "axios";
-import PogObject from "PogData";
+import { Keybind } from "../KeybindFix";
 
-const spotToken = new PogObject("SpotPlaying", {
-    token: "",
-});
+import { checkHover } from "./utils/checkHover";
+import { openSpotify } from "./utils/openSpotify";
+import { getSpotifyToken } from "./utils/getSpotifyToken";
+import { getVersion } from "./utils/getVersion";
+import { parseTimeToMilliseconds } from "./utils/parseTimeToMilliseconds";
+import { tutorial } from "./utils/tutorial";
+import { getDeviceID } from "./utils/getDeviceID";
+
+const version = getVersion();
 
 let currentSongInfo = null;
 let lastUpdateTime = Date.now();
 let localProgress = 0;
 
-let overlayX = -200; // Start off-screen
-let targetX = 5; // Target position when visible
-let animationSpeed = 5; // Speed of the sliding animation
+let targetX = 5;
 
 let isHovering = false;
+let isHoveringSymbol = false;
+
+let stopBarUpdating = false;
+
+let stopLoop = false;
 
 function displaySongInfo(songInfo, x, isHovering) {
-    if (!songInfo) return; // Add null check
+    if (!songInfo) return;
 
-    const formattedTitle = `&f${songInfo.name}`;
-    const formattedArtist = songInfo.artists && songInfo.artists.length > 0 ? `&7${songInfo.artists.join(", ")}` : "Local File";
+    const formattedTitle = Settings.npSettingsSong.replace("{song}", songInfo.name);
+    const formattedArtist = songInfo.artists && songInfo.artists.length > 0
+        ? Settings.npSettingsArtist.replace("{artist}", songInfo.artists.join(", "))
+        : "Local File";
 
     const currentProgress = Math.min(localProgress, songInfo.duration_ms);
     const minutes = Math.floor(currentProgress / 60000);
@@ -30,12 +40,20 @@ function displaySongInfo(songInfo, x, isHovering) {
     const progressText = `&a${minutes}:${seconds} / ${durationMinutes}:${durationSeconds}`;
 
     const padding = 10;
+    const symbolPadding = 5;
     const lineSpacing = 5;
+    const playSymbol = Settings.npPlaySymbol || "➤";
+    const pauseSymbol = Settings.npPauseSymbol || "││";
+
+    const playSymbolWidth = Renderer.getStringWidth(playSymbol);
+    const paddedPauseSymbol = pauseSymbol.padEnd(playSymbolWidth - Renderer.getStringWidth(pauseSymbol) + pauseSymbol.length);
+
     const titleWidth = Renderer.getStringWidth(formattedTitle);
     const artistWidth = Renderer.getStringWidth(formattedArtist);
     const timerWidth = Renderer.getStringWidth(progressText);
+    const symbolWidth = Settings.npPauseButton ? playSymbolWidth : 0;
 
-    const boxWidth = Math.max(titleWidth, artistWidth, timerWidth) + padding * 2;
+    const boxWidth = Math.max(titleWidth + symbolWidth + padding * 2 + symbolPadding, artistWidth, timerWidth) + padding * 2;
 
     const lineHeight = 10;
     const progressBarHeight = 5;
@@ -44,20 +62,20 @@ function displaySongInfo(songInfo, x, isHovering) {
     if (Settings.npProgressBar) {
         boxHeight += progressBarHeight + lineSpacing;
     } else {
-        boxHeight -= lineSpacing * 3; // Adjust to remove extra spacing
+        boxHeight -= lineSpacing * 3;
     }
 
     const boxX = x;
     const boxY = 5;
 
     const bgColor = Settings.npBGColor;
-    const barColor = Settings.npBarColor; // why out of range error if i try to preset a value??
+    const barColor = Settings.npBarColor;
 
     Renderer.drawRect(Renderer.color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), Settings.npBGOpacity), boxX, boxY, boxWidth, boxHeight);
 
-    Renderer.drawString(formattedTitle, boxX + padding, boxY + padding);
+    Renderer.drawString(formattedTitle, boxX + padding, boxY + padding, Settings.npTextShadow);
 
-    Renderer.drawString(formattedArtist, boxX + padding, boxY + padding + lineHeight + lineSpacing);
+    Renderer.drawString(formattedArtist, boxX + padding, boxY + padding + lineHeight + lineSpacing, Settings.npTextShadow);
 
     if (Settings.npProgressBar) {
         const progressBarWidth = boxWidth - padding * 2;
@@ -65,31 +83,51 @@ function displaySongInfo(songInfo, x, isHovering) {
         const progressBarY = boxY + padding + 3 * (lineHeight + lineSpacing);
         const filledBarWidth = Math.floor((currentProgress / songInfo.duration_ms) * progressBarWidth);
 
-        // Center the progress text
         const progressTextX = progressBarX + (progressBarWidth - timerWidth) / 2;
-        Renderer.drawString(progressText, progressTextX, boxY + padding + 2 * (lineHeight + lineSpacing));
+        Renderer.drawString(progressText, progressTextX, boxY + padding + 2 * (lineHeight + lineSpacing), Settings.npTextShadow);
 
         Renderer.drawRect(Renderer.color(50, 50, 50, 150), progressBarX, progressBarY, progressBarWidth, progressBarHeight);
-    
+
         Renderer.drawRect(Renderer.color(barColor.getRed(), barColor.getGreen(), barColor.getBlue(), Settings.npBarOpacity), progressBarX, progressBarY, filledBarWidth, progressBarHeight);
+
+        if (isHovering && checkHover(progressBarX, progressBarY, progressBarWidth, progressBarHeight)) {
+            isHoveringSymbol = true;
+        } else {
+            isHoveringSymbol = false;
+        }
     }
 
-    // Draw additional text only when hovering
     if (isHovering && Settings.npHover) {
         const additionalText = "&8Click to open Spotify.";
         const additionalTextWidth = Renderer.getStringWidth(additionalText);
         const additionalTextX = boxX + (boxWidth - additionalTextWidth) / 2;
-        const additionalTextY = boxY + boxHeight + 10; // Increase the Y position to make more space
+        const additionalTextY = boxY + boxHeight + 10;
 
         Renderer.drawString(additionalText, additionalTextX, additionalTextY, true);
     }
+
+    if (Settings.npPauseButton) {
+        const symbol = songInfo.is_playing ? paddedPauseSymbol : playSymbol;
+        const symbolX = boxX + boxWidth - symbolWidth - padding;
+        const symbolY = boxY + padding;
+
+        Renderer.drawString(symbol, symbolX, symbolY, true);
+
+        if (checkHover(symbolX, symbolY, symbolWidth, lineHeight)) {
+            isHoveringSymbol = true;
+        } else {
+            isHoveringSymbol = false;
+        }
+    }
 }
 
-// Function to check if the mouse is hovering over the overlay
-function checkHover(x, y, width, height) {
+function handleSeekClick(progressBarX, progressBarWidth, songDuration) {
     const mouseX = Client.getMouseX();
-    const mouseY = Client.getMouseY();
-    return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
+    const progressBarXAdjusted = progressBarX;
+    const clickPosition = Math.floor(Math.max(0, Math.min(progressBarWidth, mouseX - progressBarXAdjusted)));
+    const seekPosition = Math.floor((clickPosition / progressBarWidth) * songDuration);
+
+    if (Settings.npSeekBar) modifyPlayer("seek", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", seekPosition);
 }
 
 function updateLocalProgress() {
@@ -98,152 +136,389 @@ function updateLocalProgress() {
         const elapsed = now - lastUpdateTime;
         localProgress += elapsed;
         lastUpdateTime = now;
-        if (localProgress >= currentSongInfo.duration_ms + 1000) {
-            currentSongInfo = null;
+
+        if (!stopBarUpdating && localProgress >= currentSongInfo.duration_ms + 1000) {
+            if (currentSongInfo.name === "Advertisement") return;
+            stopBarUpdating = true;
+            setTimeout(() => {
+                getSong();
+            }, 250);
+            stopBarUpdating = true;
         }
+    } else {
+        lastUpdateTime = Date.now();
     }
 }
 
 function getSong() {
-    const apiKey = Settings.settingsApiKey;
-    request({
-        url: Settings.apiUrl,
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-API-KEY": apiKey,
-            "X-SPOT-TOKEN": spotToken.token,
-        }
-    })
-        .then(response => {
-            if (response.data && response.data.name) {
-                console.log(JSON.stringify(response.data));
-                currentSongInfo = response.data;
-                if (!currentSongInfo.artists || currentSongInfo.artists.length === 0 || currentSongInfo.artists[0] === "") {
-                    currentSongInfo.artists = ["Local File"];
-                }
-                localProgress = currentSongInfo.progress_ms;
-                lastUpdateTime = Date.now();
+    if (!Settings.npEnabled) return;
+    stopBarUpdating = false;
+
+    const command = `
+powershell.exe -Command "& {
+    $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8;
+    $headers = @{ 'Content-Type' = 'application/json'; 'Authorization' = 'Bearer ${Settings.settingsPremiumSpotToken}' };
+    $url = 'https://api.spotify.com/v1/me/player';
+    $response = Invoke-RestMethod -Uri $url -Method GET -Headers $headers;
+    Write-Host ($response | ConvertTo-Json -Compress);
+}"`;
+
+    try {
+        const process = java.lang.Runtime.getRuntime().exec(command);
+
+        const checkProcess = () => {
+            if (process.isAlive()) {
+                setTimeout(checkProcess, 50);
             } else {
-                currentSongInfo = null;
-            }            
-        })
-        .catch(error => {
-            if (error.response && error.response.data && error.response.data.error && error.response.data.error.includes("'NoneType' object is not subscriptable")) {
-                currentSongInfo = {
-                    name: "Advertisement",
-                    artists: ["Time to get Spotify Premium"],
-                    duration_ms: 0,
-                    progress_ms: 0,
-                    is_playing: true
-                };
-                localProgress = 0;
-                lastUpdateTime = Date.now();
-            } else {
-                currentSongInfo = null;
-            }
-            if (error.isAxiosError) {
-                if (JSON.stringify(error.response.data, null, 2).includes("Invalid access token") || JSON.stringify(error.response.data, null, 2).includes("Only valid bearer authentication supported") || JSON.stringify(error.response.data, null, 2).includes("The access token expired,") || JSON.stringify(error.response.data, null, 2).includes("Unauthorized access")) {
-                    if (Settings.showErrors) {
-                        ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid Spotify Token or API Key. &4Please update details found in. &7(/spotify).\n`);
-                    } else {
-                        ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid Spotify Token or API Key. &4Please update details found in. &7(/spotify).\n`);
+                try {
+                    const reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream(), "UTF-8"));
+                    let line;
+                    let output = "";
+                    while ((line = reader.readLine()) !== null) {
+                        output += line + "\n";
                     }
-                } else {
-                    if (Settings.showErrors) {
-                        ChatLib.chat(`\n${Settings.chatPrefix}&cError while fetching Spotify data: &4${JSON.stringify(error.response.data, null, 2)}\n`);
+                    reader.close();
+
+                    process.waitFor();
+
+                    if (output.trim()) {
+                        try {
+                            const response = JSON.parse(output.trim());
+
+                            if (response) {
+                                let name = "Unknown";
+                                let artists = ["Local File"];
+                                let duration_ms = 0;
+
+                                if (response.currently_playing_type === "ad") {
+                                    name = "Advertisement";
+                                    artists = ["Time to buy premium!"];
+                                } else if (response.item) {
+                                    name = response.item.name || "Unknown";
+                                    artists = response.item.artists.map(artistStr => {
+                                        const nameMatch = artistStr.match(/name=([^;]+);/);
+                                        return nameMatch ? nameMatch[1] : "Local File";
+                                    });
+                                    duration_ms = response.item.duration_ms || 0;
+                                }
+
+                                currentSongInfo = {
+                                    name: name,
+                                    artists: artists,
+                                    duration_ms: duration_ms,
+                                    progress_ms: response.progress_ms || 0,
+                                    is_playing: response.is_playing || false,
+                                    image_link: response.item && response.item.album.images.length > 0 ? response.item.album.images[0].url : "",
+                                    currently_playing_type: response.currently_playing_type || "unknown",
+                                    volume_percent: response.device.volume_percent || 0,
+                                };
+
+                                const now = Date.now();
+                                const elapsed = now - lastUpdateTime;
+                                localProgress = currentSongInfo.progress_ms + elapsed;
+                                lastUpdateTime = now;
+                            } else {
+                                console.error("SpotPlaying Error: Invalid response structure:", response);
+                            }
+                        } catch (jsonError) {
+                            console.error("SpotPlaying Error: Error parsing JSON response:", jsonError);
+                        }
                     } else {
-                        console.log(`\n${Settings.chatPrefix}&cError while fetching Spotify data: &4${JSON.stringify(error.response.data, null, 2)}\n`);
+                        if (!Settings.settingsDiscordToken) return ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid or expired Spotify Token. &4Please update details found in &7(/spotify).\n`);
+                        getSpotifyToken();
                     }
-                }
-            } else {
-                if (Settings.showErrors) {
-                    ChatLib.chat(`\n${Settings.chatPrefix}&cAn error occured while pinging the API.\n`);
-                }  else {
-                    console.log(`\n${Settings.chatPrefix}&cAn error occured while pinging the API.\n`);
+                } catch (readError) {
+                    console.error("SpotPlaying Error: Error reading process output:", readError);
                 }
             }
-        });
+        };
+
+        checkProcess();
+    } catch (e) {
+        console.error(`Error executing PowerShell command: ${e}`);
+    }
 }
 
 function pingApi() {
-    spotToken.token = Settings.settingsSpotToken;
-    spotToken.save();
+    if (stopLoop) return;
 
     if (Settings.npEnabled) {
         getSong();
-    } else {
-
     }
     setTimeout(() => {
         pingApi();
     }, Number(Settings.apiPingRate));
 }
 
-function openSpotify() {
-    try {
-        const process = java.lang.Runtime.getRuntime().exec("cmd /c start shell:AppsFolder\\SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify");
-        const exitCode = process.waitFor();
-        if (exitCode !== 0) {
-            try {
-                java.awt.Desktop.getDesktop().browse(new java.net.URI("https://open.spotify.com"));
-            } catch (e) {
-                ChatLib.chat(`${Settings.chatPrefix}&cFailed to open Spotify. &4Check console for errors.`);
-                console.log(`SpotPlaying Error: ${e}`);
-            }
-        }
-    } catch (e) {
-        try {
-            java.awt.Desktop.getDesktop().browse(new java.net.URI("https://open.spotify.com"));
-        } catch (e) {
-            ChatLib.chat(`${Settings.chatPrefix}&cFailed to open Spotify. &4Check console for errors.`);
-            console.log(`SpotPlaying Error: ${e}`);
-        }
-    }
-}
-
 register("renderOverlay", () => {
     updateLocalProgress();
+
     if (currentSongInfo && Settings.npEnabled) {
-        if (overlayX < targetX) {
-            overlayX += animationSpeed;
-            if (overlayX > targetX) overlayX = targetX;
-        }
-    } else {
-        if (overlayX > -200) {
-            overlayX -= animationSpeed;
-            if (overlayX < -200) overlayX = -200;
-        }
-    }
-    if (overlayX > -200) {
-        // Check if hovering over the overlay
         isHovering = false;
-        if (currentSongInfo) {
-            const boxWidth = Math.max(Renderer.getStringWidth(`&f${currentSongInfo.name}`), Renderer.getStringWidth(`&7${currentSongInfo.artists.join(", ")}`), Renderer.getStringWidth(`&a${Math.floor(localProgress / 60000)}:${Math.floor((localProgress % 60000) / 1000).toString().padStart(2, "0")} / ${Math.floor(currentSongInfo.duration_ms / 60000)}:${Math.floor((currentSongInfo.duration_ms % 60000) / 1000).toString().padStart(2, "0")}`)) + 20;
-            const boxHeight = 3 * 10 + 2 * 5 + 20 + 5 + 5;
-            isHovering = checkHover(overlayX, 5, boxWidth, boxHeight);
-        }
-        displaySongInfo(currentSongInfo, overlayX, isHovering);
+        const boxWidth = Math.max(
+            Renderer.getStringWidth(`&f${currentSongInfo.name}`),
+            Renderer.getStringWidth(`&7${currentSongInfo.artists.join(", ")}`),
+            Renderer.getStringWidth(`&a${Math.floor(localProgress / 60000)}:${Math.floor((localProgress % 60000) / 1000).toString().padStart(2, "0")} / ${Math.floor(currentSongInfo.duration_ms / 60000)}:${Math.floor((currentSongInfo.duration_ms % 60000) / 1000).toString().padStart(2, "0")}`)
+        ) + 20;
+        const boxHeight = 3 * 10 + 2 * 5 + 20 + 5 + 5;
+        isHovering = checkHover(targetX, 5, boxWidth, boxHeight);
+
+        displaySongInfo(currentSongInfo, targetX, isHovering);
     }
 });
 
 register("clicked", (mouseX, mouseY, button, isPressed) => {
-    if (isPressed && isHovering && Settings.npHover) {
-        openSpotify();
+    if (isPressed) {
+        if (isHovering && Settings.npHover) {
+            openSpotify();
+        }
+
+        if (isHoveringSymbol) {
+            if (currentSongInfo.is_playing) {
+                modifyPlayer("pause", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put");
+                currentSongInfo.is_playing = false;
+            } else {
+                modifyPlayer("play", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put");
+                currentSongInfo.is_playing = true;
+            }
+        }
+
+        if (Settings.npProgressBar && isHovering) {
+            const padding = 10;
+            const lineHeight = 10;
+            const lineSpacing = 5;
+            const progressBarHeight = 5;
+
+            const progressBarX = targetX + padding;
+            const boxWidth = Math.max(
+                Renderer.getStringWidth(`&f${currentSongInfo.name}`),
+                Renderer.getStringWidth(`&7${currentSongInfo.artists.join(", ")}`),
+                Renderer.getStringWidth(`&a${Math.floor(localProgress / 60000)}:${Math.floor((localProgress % 60000) / 1000).toString().padStart(2, "0")} / ${Math.floor(currentSongInfo.duration_ms / 60000)}:${Math.floor((currentSongInfo.duration_ms % 60000) / 1000).toString().padStart(2, "0")}`)
+            ) + 2 * padding;
+            const progressBarWidth = boxWidth - 2 * padding;
+
+            const progressBarY = 5 + padding + 2 * (lineHeight + lineSpacing) + lineHeight + lineSpacing;
+
+            if (mouseX >= progressBarX && mouseX <= progressBarX + progressBarWidth && mouseY >= progressBarY && mouseY <= progressBarY + progressBarHeight) {
+                handleSeekClick(progressBarX, progressBarWidth, currentSongInfo.duration_ms);
+            }
+        }
     }
 });
 
-register("command", (arg) => {
+function modifyPlayer(option, token, device_id, method, extra = 0) {
+    try {
+        let command = "";
+        let url = `https://api.spotify.com/v1/me/player/${option}?device_id=${device_id}`;
+        let headers = `@{ 'Content-Type' = 'application/json'; 'Authorization' = 'Bearer ${token}' }`;
+
+        if (option == "seek") {
+            url += `&position_ms=${extra}`;
+        } else if (option == "volume") {
+            url += `&volume_percent=${extra}`;
+        } else if (!["play", "pause", "next", "previous"].includes(option)) {
+            ChatLib.chat(`${Settings.chatPrefix}&cInvalid argument passed to &4modifyPlayer()&c.`);
+            return;
+        }
+
+        command = `powershell.exe -Command "& {
+            $headers = ${headers};
+            $url = '${url}';
+            Invoke-RestMethod -Uri $url -Method ${method} -Headers $headers
+        }"`;
+
+        const process = java.lang.Runtime.getRuntime().exec(command);
+
+        const checkProcess = () => {
+            if (process.isAlive()) {
+                setTimeout(checkProcess, 50);
+            } else {
+                const reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream(), "UTF-8"));
+                let line;
+                let output = "";
+                while ((line = reader.readLine()) !== null) {
+                    output += line + "\n";
+                }
+                reader.close();
+
+                const errorReader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream(), "UTF-8"));
+                let errorOutput = "";
+                while ((line = errorReader.readLine()) !== null) {
+                    errorOutput += line + "\n";
+                }
+                errorReader.close();
+
+                process.waitFor();
+
+                if (errorOutput.trim()) {
+                    if (errorOutput.includes("Player command failed: Restriction violated")) return ChatLib.chat(`${Settings.chatPrefix}&cAn error occured for one of the following reasons:\n&7- You tried pausing/playing on a song that is already paused/playing.\n&7- You tried skipping/rewinding on an ad.\n&7- You tried seeking during an ad.`);
+                    if (errorOutput.includes("volume_percent must be in the range 0 to 100")) return ChatLib.chat(`${Settings.chatPrefix}&cYou can only set the volume between &41-100&c.`);
+                    if (errorOutput.includes("Device not found")) {
+                        if (!Settings.settingsDiscordToken) {
+                            return ChatLib.chat(`${Settings.chatPrefix}&cInvalid Device ID. &4Please update details found in &7(/spotify).`);
+                        } else {
+                            getDeviceID();
+                            return ChatLib.chat(`${Settings.chatPrefix}&7Updating your Device ID..`);
+                        }
+                    }
+                    if (errorOutput.includes("The access token expired") || errorOutput.includes("Only valid bearer authentication supported") || errorOutput.includes("Invalid access token")) return ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid Spotify Token. &4Please update details found in &7(/spotify).\n`);
+                    ChatLib.chat(`${Settings.chatPrefix}&cAn error occured. &4${errorOutput}`);
+                } else {
+                    getSong();
+                    if (option == "pause") return ChatLib.chat(`${Settings.chatPrefix}&aSong successfully &2paused&a!`);
+                    if (option == "play") return ChatLib.chat(`${Settings.chatPrefix}&aSong successfully &2playing&a!`);
+                    if (option == "next") return ChatLib.chat(`${Settings.chatPrefix}&aSong successfully &2skipped&a!`);
+                    if (option == "previous") return ChatLib.chat(`${Settings.chatPrefix}&aSuccessfully &2went back a track&a!`);
+                    if (option == "seek") return ChatLib.chat(`${Settings.chatPrefix}&aSong position set to &2${extra}ms&a!`);
+                    if (option == "volume") return ChatLib.chat(`${Settings.chatPrefix}&aSpotify volume set to &2${extra}%&a!`);
+                }
+            }
+        };
+
+        checkProcess();
+    } catch (e) {
+        console.error(`${Settings.chatPrefix}Error executing PowerShell command: ${e}`);
+        ChatLib.chat(`${Settings.chatPrefix}&cException: &4${e}`);
+    }
+}
+
+register("gameUnload", () => {
+    stopLoop = true;
+});
+
+register("command", (arg, arg2) => {
     if (!arg) return Settings.openGUI();
 
     arg = arg.toLowerCase();
-    
+    if (arg2) arg2 = arg2.toLowerCase();
+
     if (arg == "copy") {
         ChatLib.chat(`${Settings.chatPrefix}&fCopied &7${currentSongInfo.name} &fto clipboard.`);
         ChatLib.command(`ct copy ${currentSongInfo.name}`, true);
     } else if (arg === "open") {
         openSpotify();
+    } else if (arg === "version" || arg === "ver") {
+        ChatLib.chat(`${Settings.chatPrefix}&fVersion: &7${version}&f.`);
+    } else if (arg === "pause") {
+        modifyPlayer("pause", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put");
+    } else if (arg === "play" || arg === "unpause") {
+        modifyPlayer("play", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put");
+    } else if (arg === "next" || arg === "skip") {
+        if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this command during an &4advertisement&c.`);
+        modifyPlayer("next", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
+    } else if (arg === "previous" || arg === "prev" || arg === "rewind") {
+        if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this command during an &4advertisement&c.`);
+        modifyPlayer("previous", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
+    } else if (arg === "seek" && arg2) {
+        const milliseconds = parseTimeToMilliseconds(arg2);
+        if (milliseconds !== null) {
+            if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this command during an &4advertisement&c.`);
+            modifyPlayer("seek", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", milliseconds);
+        } else {
+            ChatLib.chat(`${Settings.chatPrefix}&cInvalid time format. Use formats like "5m30s", "53s", or plain milliseconds.`);
+        }
+    } else if (arg === "volume" || arg === "vol") {
+        if (arg2 && !isNaN(arg2)) {
+            modifyPlayer("volume", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", arg2);
+        } else if (!arg2 || isNaN(arg2)) {
+            ChatLib.chat(`${Settings.chatPrefix}&cInvalid usage. &4/spot volume <1-100>&c.`);
+        }
+    } else if (arg === "token") {
+        ChatLib.chat(`${Settings.chatPrefix}&7Updating..`);
+        getSpotifyToken();
+    } else if (arg === "tutorial") {
+        if (!arg2) {
+            tutorial();
+        } else if (arg2 === "2") {
+            tutorial(2);
+        } else if (arg2 === "3") {
+            tutorial(3);
+        } else if (arg2 === "4") {
+            tutorial(4);
+        } else if (arg2 === "5") {
+            ChatLib.chat(`\n${Settings.chatPrefix}&7Attempting to setup module..\n`)
+            getSpotifyToken();
+            setTimeout(() => {
+                getDeviceID()
+                setTimeout(() => {
+                    if (Settings.settingsPremiumSpotToken && Settings.settingsDeviceID) {
+                        ChatLib.chat(`\n\n${Settings.chatPrefix}&fModule &asuccessfully setup &fwithout errors! Try putting on some music!\n&7Type &8/spot info &7for a list of commands.\n\n`)
+                        Settings.npEnabled = true;
+                    } else {
+                        ChatLib.chat(`\n\n${Settings.chatPrefix}&cAn error occured during setup.\n&4Make sure the Spotify Desktop App is open!\n&4If you still get errors, go through the tutorial again. &c/spot tutorial&4.\n\n`)
+                    }
+                }, 2500);
+            }, 2500);
+        } else {
+            tutorial();
+        }
+    } else if (arg === "device" || arg === "deviceid") {
+        getDeviceID();
+    } else if (arg === "info" || arg === "commands" || arg === "cmds") {
+        ChatLib.chat(`${Settings.chatPrefix}&f/spot &7<copy | device | info | open | pause | play | next | previous | seek <time> | token | tutorial | version | volume <1-100>>`);
+    } else {
+        ChatLib.chat(`${Settings.chatPrefix}&cInvalid command.\n&7Usage: /spot <copy | device | info | open | version | pause | play | next | previous | seek <time> | token | tutorial | volume <1-100>>`);
     }
 }).setName("spotplaying").setAliases("spotifyplaying", "spot", "spotify", "playingspot", "playingspotify");
+
+register("command", () => {
+    try {
+        java.awt.Desktop.getDesktop().browse(new java.net.URI("https://www.androidauthority.com/get-discord-token-3149920/"));
+    } catch (e) {
+        ChatLib.chat(`${Settings.chatPrefix}&cFailed to open the website. &7Please visit it here: &fhttps://www.androidauthority.com/get-discord-token-3149920/.`);
+    }
+}).setName("spotopendiscordtokentutorial")
+
+register("command", () => {
+    try {
+        java.awt.Desktop.getDesktop().browse(new java.net.URI("https://www.spotify.com/us/account/profile/"));
+    } catch (e) {
+        ChatLib.chat(`${Settings.chatPrefix}&cFailed to open the website. &7Please visit it here: &fhttps://www.spotify.com/us/account/profile/.`);
+    }
+}).setName("spotopenspotuseridtutorial")
+
+new Keybind("-5 Seconds", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
+    if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this action during an &4advertisement&c.`);
+    modifyPlayer("seek", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", currentSongInfo.progress_ms - 5000);
+});
+
+new Keybind("+5 Seconds", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
+    if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this action during an &4advertisement&c.`);
+    modifyPlayer("seek", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", currentSongInfo.progress_ms + 5000);
+});
+
+new Keybind("Increase Volume", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
+    modifyPlayer("volume", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", currentSongInfo.volume_percent - 5);
+});
+
+new Keybind("Decrease Volume", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
+    modifyPlayer("volume", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", currentSongInfo.volume_percent + 5);
+});
+
+new Keybind("Pause/Play", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
+    if (currentSongInfo.is_playing) {
+        modifyPlayer("pause", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put");
+    } else {
+        modifyPlayer("play", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put");
+    }
+});
+
+new Keybind("Previous Song", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
+    if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this action during an &4advertisement&c.`);
+    modifyPlayer("previous", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
+});
+
+new Keybind("Skip Song", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
+    if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this action during an &4advertisement&c.`);
+    modifyPlayer("next", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
+});
+
+ChatLib.chat(`\n&8[&a&lSpot&2&oPlaying&8] &f${version} &7by &btdarth &a&lloaded. &7(/spotify).\n`);
+
+if (!Settings.settingsDiscordToken) {
+    setTimeout(() => {
+        ChatLib.chat("\n\n&8[&a&lSpot&2&oPlaying&8]\n&fType &2/spot tutorial &fto setup the module!\n\n")
+    }, 1250);
+}
 
 pingApi();
