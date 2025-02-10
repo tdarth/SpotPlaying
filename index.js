@@ -226,6 +226,7 @@ powershell.exe -Command "& {
                     } else {
                         if (!Settings.settingsDiscordToken) return ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid or expired Spotify Token. &4Please update details found in &7(/spotify).\n`);
                         getSpotifyToken();
+                        ChatLib.chat(`${Settings.chatPrefix}&7Updating your Spotify Token..`);
                     }
                 } catch (readError) {
                     console.error("SpotPlaying Error: Error reading process output:", readError);
@@ -362,6 +363,7 @@ function modifyPlayer(option, token, device_id, method, extra = 0) {
                         }
                     }
                     if (errorOutput.includes("The access token expired") || errorOutput.includes("Only valid bearer authentication supported") || errorOutput.includes("Invalid access token")) return ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid Spotify Token. &4Please update details found in &7(/spotify).\n`);
+                    if (errorOutput.includes("position_ms cannot be negative") || errorOutput.includes("position_ms must be a number")) return ChatLib.chat(`${Settings.chatPrefix}&cYou can't &4seek &cto that time&c.`);
                     ChatLib.chat(`${Settings.chatPrefix}&cAn error occured. &4${errorOutput}`);
                 } else {
                     getSong();
@@ -424,17 +426,13 @@ register("command", (arg, arg2) => {
             ChatLib.chat(`${Settings.chatPrefix}&cInvalid usage. &4/spot volume <1-100>&c.`);
         }
     } else if (arg === "token") {
-        ChatLib.chat(`${Settings.chatPrefix}&7Updating..`);
+        ChatLib.chat(`${Settings.chatPrefix}&7Updating your Spotify Token..`);
         getSpotifyToken();
     } else if (arg === "tutorial") {
         if (!arg2) {
             tutorial();
-        } else if (arg2 === "2") {
-            tutorial(2);
-        } else if (arg2 === "3") {
-            tutorial(3);
-        } else if (arg2 === "4") {
-            tutorial(4);
+        } else if (arg2 === "2" || arg2 === "3" || arg2 === "4") {
+            tutorial(Number(arg2));
         } else if (arg2 === "5") {
             ChatLib.chat(`\n${Settings.chatPrefix}&7Attempting to setup module..\n`)
             getSpotifyToken();
@@ -453,6 +451,7 @@ register("command", (arg, arg2) => {
             tutorial();
         }
     } else if (arg === "device" || arg === "deviceid") {
+        ChatLib.chat(`${Settings.chatPrefix}&7Updating your Device ID..`);
         getDeviceID();
     } else if (arg === "info" || arg === "commands" || arg === "cmds") {
         ChatLib.chat(`${Settings.chatPrefix}&f/spot &7<copy | device | info | open | pause | play | next | previous | seek <time> | token | tutorial | version | volume <1-100>>`);

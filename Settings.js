@@ -10,7 +10,7 @@ class Settings {
 
     @TextProperty({
         name: "Discord Token",
-        description: "Your Discord account token. This allows the module to automatically generate Spotify Tokens when they expire.\n&cLeave blank if you want to disable.",
+        description: "Your Discord account token. This allows the module to automatically generate Spotify Tokens when they expire.",
         category: "Settings",
         placeholder: "Enter Token..",
         protected: true
@@ -19,7 +19,7 @@ class Settings {
 
     @TextProperty({
         name: "Spotify User ID",
-        description: "Your Spotify account ID. This allows the module to automatically generate Spotify Tokens when they expire.\n&cLeave blank if you want to disable.",
+        description: "Your Spotify account ID. This allows the module to automatically generate Spotify Tokens when they expire.",
         category: "Settings",
         placeholder: "Enter User ID..",
         protected: true
@@ -28,7 +28,7 @@ class Settings {
 
     @TextProperty({
         name: "Spotify Token",
-        description: "&8Only edit if you know what you are doing.",
+        description: "&8You shouldn't need to modify this option.",
         category: "Settings",
         placeholder: "Enter Token..",
         protected: true
@@ -37,7 +37,7 @@ class Settings {
 
     @TextProperty({
         name: "Spotify Device ID",
-        description: "&8Only edit if you know what you are doing.",
+        description: "&8You shouldn't need to modify this option.",
         category: "Settings",
         placeholder: "Enter ID..",
         protected: true
@@ -204,7 +204,7 @@ class Settings {
 
     constructor() {
         this.initialize(this);
-        this.setCategoryDescription("Instructions", "&a&lSpot&r&2&oPlaying\n&8Thank you for installing!\n\n&7This module has a complicated-ish setup progress.\nPlease click the button below for instructions.");
+        this.setCategoryDescription("Now Playing", "&c&l!&r &7First time? Please run &a/spot tutorial &7before modifying options. &c&l!&r");
         this.setCategoryDescription("Settings", "&7A module by &atdarth &7and &2Github Copilot&7.");
     }
 }

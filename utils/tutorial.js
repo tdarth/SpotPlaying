@@ -1,5 +1,3 @@
-import Settings from "../Settings";
-
 const TokenInstructionMessage = new Message(
     new TextComponent("&8[&a&lSpot&2&oPlaying&8] &fTo obtain your &9Discord Token&f, please click &e&l&nHERE&f &ffor instructions.\n").setClick("run_command", "/spotopendiscordtokentutorial").setHoverValue("Click to open a website containing instructions on how to obtain your &9Discord Token&f.")
 );

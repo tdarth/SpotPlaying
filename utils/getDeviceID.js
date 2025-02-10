@@ -33,7 +33,6 @@ export function getDeviceID() {
                 process.waitFor();
 
                 if (output.trim()) {
-                    console.log(output.trim())
                     try {
                         const response = JSON.parse(output.trim());
                         const deviceIds = response.devices.map(device => device.id).join(",");

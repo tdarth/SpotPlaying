@@ -24,7 +24,7 @@
 		overlay_color = "255,0,0,0"
 		overlay_opacity = 100
 		artist_title_text = "&7{artist}"
-		progress_bar_color = "255,0,255,13"
+		progress_bar_color = "255,58,255,0"
 		progress_bar_opacity = 200
 		play_symbol = "➤"
 		pause_symbol = "││"
