@@ -8,6 +8,7 @@ import { getVersion } from "./utils/getVersion";
 import { parseTimeToMilliseconds } from "./utils/parseTimeToMilliseconds";
 import { tutorial } from "./utils/tutorial";
 import { getDeviceID } from "./utils/getDeviceID";
+import { showNotification } from "./utils/notification";
 
 const version = getVersion();
 
@@ -224,9 +225,8 @@ powershell.exe -Command "& {
                             console.error("SpotPlaying Error: Error parsing JSON response:", jsonError);
                         }
                     } else {
-                        if (!Settings.settingsDiscordToken) return ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid or expired Spotify Token. &4Please update details found in &7(/spotify).\n`);
-                        getSpotifyToken();
-                        ChatLib.chat(`${Settings.chatPrefix}&7Updating your Spotify Token..`);
+                        if (!Settings.settingsDiscordToken) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                        getSpotifyToken(false);
                     }
                 } catch (readError) {
                     console.error("SpotPlaying Error: Error reading process output:", readError);
@@ -318,7 +318,7 @@ function modifyPlayer(option, token, device_id, method, extra = 0) {
         } else if (option == "volume") {
             url += `&volume_percent=${extra}`;
         } else if (!["play", "pause", "next", "previous"].includes(option)) {
-            ChatLib.chat(`${Settings.chatPrefix}&cInvalid argument passed to &4modifyPlayer()&c.`);
+            showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid argument passed to&r &cmodifyPlayer()&r&7.`, "push", 3);
             return;
         }
 
@@ -353,26 +353,26 @@ function modifyPlayer(option, token, device_id, method, extra = 0) {
 
                 if (errorOutput.trim()) {
                     if (errorOutput.includes("Player command failed: Restriction violated")) return ChatLib.chat(`${Settings.chatPrefix}&cAn error occured for one of the following reasons:\n&7- You tried pausing/playing on a song that is already paused/playing.\n&7- You tried skipping/rewinding on an ad.\n&7- You tried seeking during an ad.`);
-                    if (errorOutput.includes("volume_percent must be in the range 0 to 100")) return ChatLib.chat(`${Settings.chatPrefix}&cYou can only set the volume between &41-100&c.`);
+                    if (errorOutput.includes("volume_percent must be in the range 0 to 100")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7You can only set the volume between &c0-100&r&7.`, "push", 5);
                     if (errorOutput.includes("Device not found")) {
                         if (!Settings.settingsDiscordToken) {
-                            return ChatLib.chat(`${Settings.chatPrefix}&cInvalid Device ID. &4Please update details found in &7(/spotify).`);
+                            return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid&r &cDevice ID&r&7. Please update options found in&r &8/spotify&r&7.`, "push", 5);
                         } else {
-                            getDeviceID();
-                            return ChatLib.chat(`${Settings.chatPrefix}&7Updating your Device ID..`);
+                            return getDeviceID();
                         }
                     }
-                    if (errorOutput.includes("The access token expired") || errorOutput.includes("Only valid bearer authentication supported") || errorOutput.includes("Invalid access token")) return ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid Spotify Token. &4Please update details found in &7(/spotify).\n`);
-                    if (errorOutput.includes("position_ms cannot be negative") || errorOutput.includes("position_ms must be a number")) return ChatLib.chat(`${Settings.chatPrefix}&cYou can't &4seek &cto that time&c.`);
+                    if (errorOutput.includes("The access token expired") || errorOutput.includes("Only valid bearer authentication supported") || errorOutput.includes("Invalid access token")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                    ChatLib.chat(`${Settings.chatPrefix}&cAn error occurred. &4${errorOutput}`);
+                    if (errorOutput.includes("position_ms cannot be negative") || errorOutput.includes("position_ms must be a number")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7You can't seek to that time.`, "push", 5);
                     ChatLib.chat(`${Settings.chatPrefix}&cAn error occured. &4${errorOutput}`);
                 } else {
                     getSong();
-                    if (option == "pause") return ChatLib.chat(`${Settings.chatPrefix}&aSong successfully &2paused&a!`);
-                    if (option == "play") return ChatLib.chat(`${Settings.chatPrefix}&aSong successfully &2playing&a!`);
-                    if (option == "next") return ChatLib.chat(`${Settings.chatPrefix}&aSong successfully &2skipped&a!`);
-                    if (option == "previous") return ChatLib.chat(`${Settings.chatPrefix}&aSuccessfully &2went back a track&a!`);
-                    if (option == "seek") return ChatLib.chat(`${Settings.chatPrefix}&aSong position set to &2${extra}ms&a!`);
-                    if (option == "volume") return ChatLib.chat(`${Settings.chatPrefix}&aSpotify volume set to &2${extra}%&a!`);
+                    if (option == "pause") return showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Song paused.`, "push", 1);
+                    if (option == "play") return showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Song unpaused.`, "push", 1);
+                    if (option == "next") return showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Skipped song.`, "push", 1);
+                    if (option == "previous") return showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Went back a song.`, "push", 1);
+                    if (option == "seek") return showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Song position set to &a${extra}ms&r&7.`, "push", 1);
+                    if (option == "volume") return showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Volume set to &a${extra}%&r&7.`, "push", 1);
                 }
             }
         };
@@ -395,55 +395,60 @@ register("command", (arg, arg2) => {
     if (arg2) arg2 = arg2.toLowerCase();
 
     if (arg == "copy") {
-        ChatLib.chat(`${Settings.chatPrefix}&fCopied &7${currentSongInfo.name} &fto clipboard.`);
+        if (arg2 === "artist" || arg2 === "artists") {
+            showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Copied&r &a${currentSongInfo.artists.join(", ")}&r&7 to clipboard.`, "push", 3);
+            return ChatLib.command(`ct copy ${currentSongInfo.artists.join(", ")}`, true);
+        }
+        showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Copied&r &a${currentSongInfo.name}&r&7 to clipboard.`, "push", 3);
         ChatLib.command(`ct copy ${currentSongInfo.name}`, true);
     } else if (arg === "open") {
         openSpotify();
     } else if (arg === "version" || arg === "ver") {
-        ChatLib.chat(`${Settings.chatPrefix}&fVersion: &7${version}&f.`);
+        showNotification(`${Settings.chatPrefix}`, `&7Using Version &f${version}&7.`, "push", 3);
     } else if (arg === "pause") {
         modifyPlayer("pause", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put");
     } else if (arg === "play" || arg === "unpause") {
         modifyPlayer("play", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put");
     } else if (arg === "next" || arg === "skip") {
-        if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this command during an &4advertisement&c.`);
+        if (currentSongInfo.name === "Advertisement") return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Wait for the &cAD&7 to finish.`, "push", 3);
         modifyPlayer("next", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
     } else if (arg === "previous" || arg === "prev" || arg === "rewind") {
-        if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this command during an &4advertisement&c.`);
+        if (currentSongInfo.name === "Advertisement") return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Wait for the &cAD&7 to finish.`, "push", 3);
         modifyPlayer("previous", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
     } else if (arg === "seek" && arg2) {
         const milliseconds = parseTimeToMilliseconds(arg2);
         if (milliseconds !== null) {
-            if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this command during an &4advertisement&c.`);
+            if (currentSongInfo.name === "Advertisement") return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Wait for the &cAD&7 to finish.`, "push", 3);
             modifyPlayer("seek", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", milliseconds);
         } else {
-            ChatLib.chat(`${Settings.chatPrefix}&cInvalid time format. Use formats like "5m30s", "53s", or plain milliseconds.`);
+            showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid time format.\n&f"1m30s", "53s", or milliseconds.`, "push", 3);
         }
     } else if (arg === "volume" || arg === "vol") {
         if (arg2 && !isNaN(arg2)) {
             modifyPlayer("volume", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", arg2);
         } else if (!arg2 || isNaN(arg2)) {
-            ChatLib.chat(`${Settings.chatPrefix}&cInvalid usage. &4/spot volume <1-100>&c.`);
+            showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid usage.\n&c/spot volume <1-100>&7.`, "push", 3);
         }
     } else if (arg === "token") {
-        ChatLib.chat(`${Settings.chatPrefix}&7Updating your Spotify Token..`);
-        getSpotifyToken();
+        getSpotifyToken(true);
     } else if (arg === "tutorial") {
         if (!arg2) {
             tutorial();
         } else if (arg2 === "2" || arg2 === "3" || arg2 === "4") {
             tutorial(Number(arg2));
         } else if (arg2 === "5") {
-            ChatLib.chat(`\n${Settings.chatPrefix}&7Attempting to setup module..\n`)
-            getSpotifyToken();
+            showNotification(`${Settings.chatPrefix}`, `&8Attempting to setup module..`, "push", 7);
+            getSpotifyToken(true);
             setTimeout(() => {
-                getDeviceID()
+                getDeviceID(true)
                 setTimeout(() => {
                     if (Settings.settingsPremiumSpotToken && Settings.settingsDeviceID) {
                         ChatLib.chat(`\n\n${Settings.chatPrefix}&fModule &asuccessfully setup &fwithout errors! Try putting on some music!\n&7Type &8/spot info &7for a list of commands.\n\n`)
+                        showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Success!\n&aThe module is now setup.`, "push", 2);
                         Settings.npEnabled = true;
                     } else {
                         ChatLib.chat(`\n\n${Settings.chatPrefix}&cAn error occured during setup.\n&4Make sure the Spotify Desktop App is open!\n&4If you still get errors, go through the tutorial again. &c/spot tutorial&4.\n\n`)
+                        showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Error during setup.`, "push", 1);
                     }
                 }, 2500);
             }, 2500);
@@ -451,8 +456,7 @@ register("command", (arg, arg2) => {
             tutorial();
         }
     } else if (arg === "device" || arg === "deviceid") {
-        ChatLib.chat(`${Settings.chatPrefix}&7Updating your Device ID..`);
-        getDeviceID();
+        getDeviceID(true);
     } else if (arg === "info" || arg === "commands" || arg === "cmds") {
         ChatLib.chat(`${Settings.chatPrefix}&f/spot &7<copy | device | info | open | pause | play | next | previous | seek <time> | token | tutorial | version | volume <1-100>>`);
     } else {
@@ -477,12 +481,12 @@ register("command", () => {
 }).setName("spotopenspotuseridtutorial")
 
 new Keybind("-5 Seconds", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
-    if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this action during an &4advertisement&c.`);
+    if (currentSongInfo.name === "Advertisement") return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Wait for the &cAD&7 to finish.`, "push", 3);
     modifyPlayer("seek", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", currentSongInfo.progress_ms - 5000);
 });
 
 new Keybind("+5 Seconds", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
-    if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this action during an &4advertisement&c.`);
+    if (currentSongInfo.name === "Advertisement") return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Wait for the &cAD&7 to finish.`, "push", 3);
     modifyPlayer("seek", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", currentSongInfo.progress_ms + 5000);
 });
 
@@ -503,12 +507,12 @@ new Keybind("Pause/Play", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").register
 });
 
 new Keybind("Previous Song", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
-    if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this action during an &4advertisement&c.`);
+    if (currentSongInfo.name === "Advertisement") return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Wait for the &cAD&7 to finish.`, "push", 3);
     modifyPlayer("previous", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
 });
 
 new Keybind("Skip Song", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
-    if (currentSongInfo.name === "Advertisement") return ChatLib.chat(`${Settings.chatPrefix}&cYou can't run this action during an &4advertisement&c.`);
+    if (currentSongInfo.name === "Advertisement") return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Wait for the &cAD&7 to finish.`, "push", 3);
     modifyPlayer("next", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
 });
 

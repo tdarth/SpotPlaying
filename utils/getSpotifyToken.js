@@ -1,7 +1,10 @@
 import Settings from "../Settings";
+import { showNotification } from "./notification";
 
-export function getSpotifyToken() {
+export function getSpotifyToken(forceMsg = false) {
     try {
+        if (Settings.updateMessages || forceMsg) showNotification(`${Settings.chatPrefix}`, `&8Updating your Spotify Token..`, "push", 1);
+
         let command = `powershell.exe -Command "& {
             $headers = @{ 'Content-Type' = 'application/json'; 'Authorization' = '${Settings.settingsDiscordToken}' };
             $url = 'https://discord.com/api/v9/users/@me/connections/spotify/${Settings.settingsSpotifyUserId}/access-token';
@@ -35,14 +38,14 @@ export function getSpotifyToken() {
                     try {
                         const accessToken = output.trim()
                         Settings.settingsPremiumSpotToken = accessToken;
-                        ChatLib.chat(`${Settings.chatPrefix}&aSuccessfully updated your &2Spotify Token&a!`);
+                        if (Settings.updateMessages || forceMsg) showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Updated your&r &aSpotify Token&7.`, "push", 1);
                     } catch (jsonError) {
                         console.error("SpotPlaying Error: Error parsing JSON response:", jsonError);
                     }
                 } else {
-                    if (errorOutput.includes("Unauthorized")) return ChatLib.chat(`${Settings.chatPrefix}&cInvalid Discord Token. &4Please update details found in &7(/spotify).`);
-                    if (errorOutput.includes("405: Method Not Allowed")) return ChatLib.chat(`${Settings.chatPrefix}&cInvalid Spotify Account ID. &4Please update details found in &7(/spotify).`)
-                    if (errorOutput.includes("Unknown Connection")) return ChatLib.chat(`${Settings.chatPrefix}&cYou must have your &4Spotify &caccount linked to your &4Discord &caccount.`);
+                    if (errorOutput.includes("Unauthorized")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cDiscord Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                    if (errorOutput.includes("405: Method Not Allowed")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid&r &cSpotify Acccount ID&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                    if (errorOutput.includes("Unknown Connection")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Please link your&r &cSpotify Account&r&7 to your&r &cDiscord Account&r&7.`, "push", 5);
                     ChatLib.chat(`${Settings.chatPrefix}&cAn error occured. &4${errorOutput}`);
                 }
             }

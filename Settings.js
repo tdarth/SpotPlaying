@@ -52,6 +52,13 @@ class Settings {
     })
     apiPingRate = "5000";
 
+    @CheckboxProperty({
+        name: "Update Messages",
+        description: "&7Toggles if you are able to see the Successfully updated your ... messages.",
+        category: "Settings",
+    })
+    updateMessages = false;
+
     @TextProperty({
         name: "Chat Prefix",
         description: "What do you want the &bChat Prefix&7 to be?",
@@ -59,7 +66,7 @@ class Settings {
         placeholder: "Enter Chat Prefix..",
         subcategory: "Other"
     })
-    chatPrefix = "&8[&a&lSpot&2&oPlaying&8] &f";
+    chatPrefix = "&8[&a&lSpot&r&2&oPlaying&r&8]&r &f";
 
     @ButtonProperty({
         name: "Reload ChatTriggers",

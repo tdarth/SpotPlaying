@@ -1,13 +1,14 @@
 
 [settings]
 	api_ping_rate = "5000"
+	update_messages = false
 	spotify_user_id = ""
 	discord_token = ""
 	spotify_token = ""
 	spotify_device_id = ""
 
 	[settings.other]
-		chat_prefix = "&8[&a&lSpot&2&oPlaying&8] &f"
+		chat_prefix = "&8[&a&lSpot&r&2&oPlaying&r&8]&r &f"
 
 [now_playing]
 
@@ -24,7 +25,7 @@
 		overlay_color = "255,0,0,0"
 		overlay_opacity = 100
 		artist_title_text = "&7{artist}"
-		progress_bar_color = "255,58,255,0"
+		progress_bar_color = "255,0,0,0"
 		progress_bar_opacity = 200
 		play_symbol = "➤"
 		pause_symbol = "││"

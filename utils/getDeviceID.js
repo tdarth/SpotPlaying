@@ -1,7 +1,10 @@
 import Settings from "../Settings";
+import { showNotification } from "./notification";
 
-export function getDeviceID() {
+export function getDeviceID(forceMsg = false) {
     try {
+        if (Settings.updateMessages || forceMsg) showNotification(`${Settings.chatPrefix}`, `&8Updating your Device ID..`, "push", 1);
+
         let command = `powershell.exe -Command "& {
             $headers = @{ 'Content-Type' = 'application/json'; 'Authorization' = 'Bearer ${Settings.settingsPremiumSpotToken}' };
             $url = 'https://api.spotify.com/v1/me/player/devices';
@@ -38,16 +41,16 @@ export function getDeviceID() {
                         const deviceIds = response.devices.map(device => device.id).join(",");
 
                         if (deviceIds == []) {
-                            return ChatLib.chat(`${Settings.chatPrefix}&4Error! &cMake sure the &4Spotify Desktop App &cis open!`);
+                            return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Make sure the&r &cDesktop App&r\n&7is open.`, "push", 5);
                         }
 
                         Settings.settingsDeviceID = deviceIds;
-                        ChatLib.chat(`${Settings.chatPrefix}&aSuccessfully updated your &2Device IDs&a!`);
+                        if (Settings.updateMessages || forceMsg) showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Updated your&r &aDevice ID&r&7.`, "push", 1);
                     } catch (jsonError) {
                         console.error("SpotPlaying Error: Error parsing JSON response:", jsonError);
                     }
                 } else {
-                    if (errorOutput.includes("The access token expired") || errorOutput.includes("Only valid bearer authentication supported") || errorOutput.includes("Invalid access token")) return ChatLib.chat(`\n${Settings.chatPrefix}&cInvalid Spotify Token. &4Please update details found in &7(/spotify).\n`);
+                    if (errorOutput.includes("The access token expired") || errorOutput.includes("Only valid bearer authentication supported") || errorOutput.includes("Invalid access token")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
                     ChatLib.chat(`${Settings.chatPrefix}&cAn error occurred. &4${errorOutput}`);
                 }
             }
