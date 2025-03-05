@@ -1,32 +1,42 @@
 
 [settings]
-	api_ping_rate = "5000"
-	update_messages = false
-	spotify_user_id = ""
-	discord_token = ""
-	spotify_token = ""
-	spotify_device_id = ""
 
 	[settings.other]
 		chat_prefix = "&8[&a&lSpot&r&2&oPlaying&r&8]&r &f"
+
+	[settings.configuration]
+		api_ping_rate = "5000"
+		update_messages = false
+
+	[settings.api_access]
+		spotify_user_id = ""
+		discord_token = ""
+		spotify_token = ""
+		spotify_device_id = ""
 
 [now_playing]
 
 	[now_playing.-_toggles_-]
 		overlay_enabled = false
 		"pause/play_button" = true
-		progress_bar_seek = true
+		"&e&oshow_instructions" = true
 		progress_bar = true
-		open_spotify_on_click = true
+		"&e&oprogress_bar_seek" = true
+		click_controls = true
 
 	[now_playing.configuration]
+		"&e&oplay_symbol" = "➤"
 		song_title_text = "{song}"
 		text_shadows = true
 		overlay_color = "255,0,0,0"
+		"&e&oprogress_bar_opacity" = 200
 		overlay_opacity = 100
 		artist_title_text = "&7{artist}"
-		progress_bar_color = "255,0,0,0"
-		progress_bar_opacity = 200
-		play_symbol = "➤"
-		pause_symbol = "││"
+		progress_bar_color = "255,3,255,0"
+		"&e&opause_symbol" = "││"
+
+	[now_playing.position]
+		"&e&osnap_size" = 5
+		"&e&ooverlay_x" = 5
+		"&e&ooverlay_y" = 5
 

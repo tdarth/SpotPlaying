@@ -16,8 +16,6 @@ let currentSongInfo = null;
 let lastUpdateTime = Date.now();
 let localProgress = 0;
 
-let targetX = 5;
-
 let isHovering = false;
 let isHoveringSymbol = false;
 
@@ -25,7 +23,7 @@ let stopBarUpdating = false;
 
 let stopLoop = false;
 
-function displaySongInfo(songInfo, x, isHovering) {
+function displaySongInfo(songInfo, x, y, isHovering) {
     if (!songInfo) return;
 
     const formattedTitle = Settings.npSettingsSong.replace("{song}", songInfo.name);
@@ -67,7 +65,7 @@ function displaySongInfo(songInfo, x, isHovering) {
     }
 
     const boxX = x;
-    const boxY = 5;
+    const boxY = y;
 
     const bgColor = Settings.npBGColor;
     const barColor = Settings.npBarColor;
@@ -98,13 +96,20 @@ function displaySongInfo(songInfo, x, isHovering) {
         }
     }
 
-    if (isHovering && Settings.npHover) {
-        const additionalText = "&8Click to open Spotify.";
-        const additionalTextWidth = Renderer.getStringWidth(additionalText);
-        const additionalTextX = boxX + (boxWidth - additionalTextWidth) / 2;
-        const additionalTextY = boxY + boxHeight + 10;
+    if (isHovering && Settings.npCCInstructions) {
+        const additionalTextLines = [
+            "&8Left Click twice to Skip.",
+            "&8Right Click twice to Go Back.",
+            "&8Middle Click to open Spotify."
+        ];
 
-        Renderer.drawString(additionalText, additionalTextX, additionalTextY, true);
+        additionalTextLines.forEach((line, index) => {
+            const lineWidth = Renderer.getStringWidth(line);
+            const lineX = boxX + (boxWidth - lineWidth) / 2;
+            const lineY = boxY + boxHeight + 10 + (index * 10);
+
+            Renderer.drawString(line, lineX, lineY, true);
+        });
     }
 
     if (Settings.npPauseButton) {
@@ -262,15 +267,53 @@ register("renderOverlay", () => {
             Renderer.getStringWidth(`&a${Math.floor(localProgress / 60000)}:${Math.floor((localProgress % 60000) / 1000).toString().padStart(2, "0")} / ${Math.floor(currentSongInfo.duration_ms / 60000)}:${Math.floor((currentSongInfo.duration_ms % 60000) / 1000).toString().padStart(2, "0")}`)
         ) + 20;
         const boxHeight = 3 * 10 + 2 * 5 + 20 + 5 + 5;
-        isHovering = checkHover(targetX, 5, boxWidth, boxHeight);
+        isHovering = checkHover(Settings.npOverlayX, Settings.npOverlayY, boxWidth, boxHeight);
 
-        displaySongInfo(currentSongInfo, targetX, isHovering);
+        displaySongInfo(currentSongInfo, Settings.npOverlayX, Settings.npOverlayY, isHovering);
     }
 });
 
+register("dragged", function(dx, dy, x, y, btn) {
+    if (Settings.npDragGui.isOpen()) {
+        const boxWidth = Math.max(
+            Renderer.getStringWidth(`&f${currentSongInfo.name}`),
+            Renderer.getStringWidth(`&7${currentSongInfo.artists.join(", ")}`),
+            Renderer.getStringWidth(`&a${Math.floor(localProgress / 60000)}:${Math.floor((localProgress % 60000) / 1000).toString().padStart(2, "0")} / ${Math.floor(currentSongInfo.duration_ms / 60000)}:${Math.floor((currentSongInfo.duration_ms % 60000) / 1000).toString().padStart(2, "0")}`)
+        ) + 20;
+        const boxHeight = 3 * 10 + 2 * 5 + 20 + 5 + 5;
+
+        if (Math.abs(Settings.npOverlayX - x + dx) < boxWidth / 2 + 30 && Math.abs(Settings.npOverlayY - y + dy) < boxHeight / 2 + 20) {
+            Settings.npOverlayX = Math.round(x / Settings.npSnapSize) * Settings.npSnapSize;
+            Settings.npOverlayY = Math.round(y / Settings.npSnapSize) * Settings.npSnapSize;
+        }
+    }
+});
+
+let leftButton = 0;
+let rightButton = 0;
+
 register("clicked", (mouseX, mouseY, button, isPressed) => {
-    if (isPressed) {
-        if (isHovering && Settings.npHover) {
+    if (isPressed && !Settings.npDragGui.isOpen()) {
+        if (isHovering && Settings.npClickControls && button === 0.0) {
+            leftButton += 1;
+            setTimeout(() => { leftButton = 0; }, 1000);
+
+            if (leftButton >= 2) {
+                modifyPlayer("next", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
+                leftButton = 0;
+            }
+        }
+
+        if (isHovering && Settings.npClickControls && button === 1.0) {
+            rightButton += 1;
+            setTimeout(() => { rightButton = 0; }, 1000);
+            if (rightButton >= 2) {
+                modifyPlayer("previous", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Post");
+                rightButton = 0;
+            }
+        }
+
+        if (isHovering && Settings.npClickControls && button === 2.0) {
             openSpotify();
         }
 
@@ -290,7 +333,7 @@ register("clicked", (mouseX, mouseY, button, isPressed) => {
             const lineSpacing = 5;
             const progressBarHeight = 5;
 
-            const progressBarX = targetX + padding;
+            const progressBarX = Settings.npOverlayX + padding;
             const boxWidth = Math.max(
                 Renderer.getStringWidth(`&f${currentSongInfo.name}`),
                 Renderer.getStringWidth(`&7${currentSongInfo.artists.join(", ")}`),
@@ -490,11 +533,11 @@ new Keybind("+5 Seconds", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").register
     modifyPlayer("seek", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", currentSongInfo.progress_ms + 5000);
 });
 
-new Keybind("Increase Volume", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
+new Keybind("Decrease Volume", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
     modifyPlayer("volume", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", currentSongInfo.volume_percent - 5);
 });
 
-new Keybind("Decrease Volume", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
+new Keybind("Increase Volume", Keyboard.KEY_NONE, "§a§lSpot§2§oPlaying").registerKeyPress(() => {
     modifyPlayer("volume", Settings.settingsPremiumSpotToken, Settings.settingsDeviceID, "Put", currentSongInfo.volume_percent + 5);
 });
 

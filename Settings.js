@@ -6,12 +6,15 @@ const version = getVersion();
 @Vigilant("SpotPlaying", `§a§lSpot§2§oPlaying §f${version} §7by §btdarth`)
 
 class Settings {
+    npDragGui = new Gui();
+
     // Settings
 
     @TextProperty({
         name: "Discord Token",
         description: "Your Discord account token. This allows the module to automatically generate Spotify Tokens when they expire.",
         category: "Settings",
+        subcategory: "API Access",
         placeholder: "Enter Token..",
         protected: true
     })
@@ -21,6 +24,7 @@ class Settings {
         name: "Spotify User ID",
         description: "Your Spotify account ID. This allows the module to automatically generate Spotify Tokens when they expire.",
         category: "Settings",
+        subcategory: "API Access",
         placeholder: "Enter User ID..",
         protected: true
     })
@@ -30,6 +34,7 @@ class Settings {
         name: "Spotify Token",
         description: "&8You shouldn't need to modify this option.",
         category: "Settings",
+        subcategory: "API Access",
         placeholder: "Enter Token..",
         protected: true
     })
@@ -37,8 +42,9 @@ class Settings {
 
     @TextProperty({
         name: "Spotify Device ID",
-        description: "&8You shouldn't need to modify this option.",
+        description: "&8Run /spot device if this option is blank.",
         category: "Settings",
+        subcategory: "API Access",
         placeholder: "Enter ID..",
         protected: true
     })
@@ -46,9 +52,10 @@ class Settings {
 
     @TextProperty({
         name: "API Ping Rate",
-        description: "&7The time in milliseconds the API will be pinged at.\n&8A lower value may get you rate limited.",
+        description: "&7The time in milliseconds the API will be pinged at.\n&8It is highly recommended to keep this value at 5000.",
         category: "Settings",
-        placeholder: "Enter Number..",
+        subcategory: "Configuration",
+        placeholder: "Enter Number.."
     })
     apiPingRate = "5000";
 
@@ -56,6 +63,7 @@ class Settings {
         name: "Update Messages",
         description: "&7Toggles if you are able to see the Successfully updated your ... messages.",
         category: "Settings",
+        subcategory: "Configuration"
     })
     updateMessages = false;
 
@@ -83,6 +91,16 @@ class Settings {
 
     // Now Playing
 
+    @ButtonProperty({
+        name: "&e&oMove Overlay",
+        description: "Allows you to drag the overlay to move it.",
+        placeholder: "Click",
+        category: "Now Playing"
+    })
+    openDrag() {
+        this.npDragGui.open();
+    }
+
     // - Toggles -
 
     @CheckboxProperty({
@@ -102,7 +120,7 @@ class Settings {
     npProgressBar = true;
 
     @CheckboxProperty({
-        name: "Progress Bar Seek",
+        name: "&e&oProgress Bar Seek",
         description: "&7Toggles if clicking a spot in the progress bar updates the song time.",
         category: "Now Playing",
         subcategory: "- Toggles -"
@@ -118,12 +136,54 @@ class Settings {
     npPauseButton = true;
 
     @CheckboxProperty({
-        name: "Open Spotify on Click",
-        description: "&7Toggles if you are able to open Spotify by clicking on the overlay.",
+        name: "Click Controls",
+        description: "&7Toggles the following controls.\n&f2x Left Click Skips, 2x Right Click Previous, Middle Click opens Spotify.",
         category: "Now Playing",
         subcategory: "- Toggles -"
     })
-    npHover = true;
+    npClickControls = true;
+
+    @CheckboxProperty({
+        name: "&e&oShow Instructions",
+        description: "&7Toggles if the Click Control keybinds are shown when hovering.",
+        category: "Now Playing",
+        subcategory: "- Toggles -"
+    })
+    npCCInstructions = true;
+
+    // Position
+
+    
+    @SliderProperty({
+        name: "&e&oOverlay X",
+        description: "The X position of the overlay.",
+        category: "Now Playing",
+        subcategory: "Position",
+        min: 0,
+        max: 1000
+    })
+    npOverlayX = 5;
+
+    @SliderProperty({
+        name: "&e&oOverlay Y",
+        description: "The Y position of the overlay.",
+        category: "Now Playing",
+        subcategory: "Position",
+        min: 0,
+        max: 1000
+    })
+    npOverlayY = 5;
+
+    @SliderProperty({
+        name: "&e&oSnap Size",
+        description: "The snap size of the overlay.",
+        category: "Now Playing",
+        subcategory: "Position",
+        min: 1,
+        max: 10
+    })
+    npSnapSize = 5;
+
 
     // Configuration
 
@@ -174,7 +234,7 @@ class Settings {
     npBGOpacity = 100;
 
     @SliderProperty({
-        name: "Progress Bar Opacity",
+        name: "&e&oProgress Bar Opacity",
         description: "&7The opacity of the progress bar.",
         category: "Now Playing",
         subcategory: "Configuration",
@@ -184,7 +244,7 @@ class Settings {
     npBarOpacity = 200;
 
     @TextProperty({
-        name: "Pause Symbol",
+        name: "&e&oPause Symbol",
         description: "Sets the text of the pause button. &8Leave blank for default.",
         category: "Now Playing",
         placeholder: "Enter Text..",
@@ -193,7 +253,7 @@ class Settings {
     npPauseSymbol = "││";
 
     @TextProperty({
-        name: "Play Symbol",
+        name: "&e&oPlay Symbol",
         description: "Sets the text of the play button. &8Leave blank for default.",
         category: "Now Playing",
         placeholder: "Enter Text..",
@@ -211,8 +271,17 @@ class Settings {
 
     constructor() {
         this.initialize(this);
-        this.setCategoryDescription("Now Playing", "&c&l!&r &7First time? Please run &a/spot tutorial &7before modifying options. &c&l!&r");
-        this.setCategoryDescription("Settings", "&7A module by &atdarth &7and &2Github Copilot&7.");
+        this.addDependency("&e&oMove Overlay", "Overlay Enabled");
+        this.addDependency("&e&oOverlay X", "Overlay Enabled");
+        this.addDependency("&e&oOverlay Y", "Overlay Enabled");
+        this.addDependency("&e&oSnap Size", "Overlay Enabled");
+        this.addDependency("&e&oShow Instructions", "Click Controls");
+        this.addDependency("&e&oProgress Bar Seek", "Progress Bar");
+        this.addDependency("&e&oProgress Bar Opacity", "Progress Bar");
+        this.addDependency("&e&oPause Symbol", "Pause/Play Button");
+        this.addDependency("&e&oPlay Symbol", "Pause/Play Button");
+        this.setCategoryDescription("Now Playing", "&c&l!&r &7First time? Please run &a/spot tutorial &7before modifying options. &c&l!&r\nOptions titled &e&olike this&r require another feature to be enabled.");
+        this.setCategoryDescription("Settings", "&7A module by &atdarth &7and &2Github Copilot&7.\n&c&lDo not share these tokens with anyone!&r");
     }
 }
 

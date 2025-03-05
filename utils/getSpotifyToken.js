@@ -44,7 +44,7 @@ export function getSpotifyToken(forceMsg = false) {
                     }
                 } else {
                     if (errorOutput.includes("Unauthorized")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cDiscord Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
-                    if (errorOutput.includes("405: Method Not Allowed")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid&r &cSpotify Acccount ID&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                    if (errorOutput.includes("405: Method Not Allowed")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid&r &cSpotify Account ID&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
                     if (errorOutput.includes("Unknown Connection")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Please link your&r &cSpotify Account&r&7 to your&r &cDiscord Account&r&7.`, "push", 5);
                     ChatLib.chat(`${Settings.chatPrefix}&cAn error occured. &4${errorOutput}`);
                 }
