@@ -6,7 +6,7 @@
 
 	[settings.configuration]
 		api_ping_rate = "5000"
-		update_messages = false
+		loading_messages = false
 
 	[settings.api_access]
 		spotify_user_id = ""
@@ -29,10 +29,11 @@
 		song_title_text = "{song}"
 		text_shadows = true
 		overlay_color = "255,0,0,0"
+		"&e&oprogress_bar_text" = "&a{minutes}:{seconds} / {endminutes}:{endseconds}"
 		"&e&oprogress_bar_opacity" = 200
 		overlay_opacity = 100
 		artist_title_text = "&7{artist}"
-		progress_bar_color = "255,3,255,0"
+		"&e&oprogress_bar_color" = "255,14,255,0"
 		"&e&opause_symbol" = "││"
 
 	[now_playing.position]

@@ -60,8 +60,8 @@ class Settings {
     apiPingRate = "5000";
 
     @CheckboxProperty({
-        name: "Update Messages",
-        description: "&7Toggles if you are able to see the Successfully updated your ... messages.",
+        name: "Loading Messages",
+        description: "&7Toggles if you are able to see loading messages on async actions.",
         category: "Settings",
         subcategory: "Configuration"
     })
@@ -137,7 +137,7 @@ class Settings {
 
     @CheckboxProperty({
         name: "Click Controls",
-        description: "&7Toggles the following controls.\n&f2x Left Click Skips, 2x Right Click Previous, Middle Click opens Spotify.",
+        description: "&7Toggles the following controls.\n&82x Left Click Skips, 2x Right Click Previous, Middle Click opens Spotify.",
         category: "Now Playing",
         subcategory: "- Toggles -"
     })
@@ -205,6 +205,15 @@ class Settings {
     })
     npSettingsArtist = "&7{artist}";
 
+    @TextProperty({
+        name: "&e&oProgress Bar Text",
+        description: "&7The text that appears above the progress bar.&r\n&8Default: {minutes}:{seconds} / {endminutes}:{endseconds}.",
+        category: "Now Playing",
+        placeholder: "Enter Text..",
+        subcategory: "Configuration"
+    })
+    npBarText = "&a{minutes}:{seconds} / {endminutes}:{endseconds}";
+
     @ColorProperty({
         name: "Overlay Color",
         description: "&7The background color of the overlay.",
@@ -215,7 +224,7 @@ class Settings {
     npBGColor = new Color(0, 0, 0);
 
     @ColorProperty({
-        name: "Progress Bar Color",
+        name: "&e&oProgress Bar Color",
         description: "&7The color of the progress bar.",
         category: "Now Playing",
         subcategory: "Configuration",
@@ -277,6 +286,8 @@ class Settings {
         this.addDependency("&e&oSnap Size", "Overlay Enabled");
         this.addDependency("&e&oShow Instructions", "Click Controls");
         this.addDependency("&e&oProgress Bar Seek", "Progress Bar");
+        this.addDependency("&e&oProgress Bar Color", "Progress Bar");
+        this.addDependency("&e&oProgress Bar Text", "Progress Bar");
         this.addDependency("&e&oProgress Bar Opacity", "Progress Bar");
         this.addDependency("&e&oPause Symbol", "Pause/Play Button");
         this.addDependency("&e&oPlay Symbol", "Pause/Play Button");
