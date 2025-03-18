@@ -33,7 +33,7 @@
 		"&e&oprogress_bar_opacity" = 200
 		overlay_opacity = 100
 		artist_title_text = "&7{artist}"
-		"&e&oprogress_bar_color" = "255,14,255,0"
+		"&e&oprogress_bar_color" = "255,17,255,0"
 		"&e&opause_symbol" = "││"
 
 	[now_playing.position]
