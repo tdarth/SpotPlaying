@@ -6,6 +6,7 @@ The _all-in-one_ Spotify Integration for Minecraft.
 
 ## Features
 - Displays your currently playing **Song** and **Artist**.
+- Shows the song cover image of the playing song.
 - A progress bar that shows your length into a song.
 - Player Controls, including Pausing/Skipping, Rewinding/Fastforwarding, and Volume Controls.
 - Search for playlists and play them directly in-game.
@@ -29,4 +30,4 @@ Everything in this module is customizable! From any text that is rendered on you
 After installing the module, type ```/spot tutorial``` in-game to setup the module.
 
 # Preview Screenshots
-![Screenshot showcasing the overlay SpotPlaying provides in game, playing the song Lag Train by inabakumori.](https://i.imgur.com/iwApHCS.png)
+![Screenshot showcasing the overlay SpotPlaying provides in game, playing the song Lag Train by inabakumori.](https://i.imgur.com/rCx2A3P.png)
