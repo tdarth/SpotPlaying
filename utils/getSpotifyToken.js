@@ -36,7 +36,7 @@ export function getSpotifyToken(forceMsg = false) {
 
                 if (output.trim()) {
                     try {
-                        const accessToken = output.trim()
+                        const accessToken = output.trim();
                         Settings.settingsPremiumSpotToken = accessToken;
                         if (Settings.updateMessages || forceMsg) showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Updated your&r &aSpotify Token&7.`, "push", 1);
                     } catch (jsonError) {

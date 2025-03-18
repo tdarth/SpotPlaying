@@ -2,6 +2,8 @@ import Settings from "../Settings";
 import { showNotification } from "./notification";
 
 export function search(query, limit, forceMsg = false) {
+    if (isNaN(limit)) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7The limit argument must be a\n&7number.`, "push", 3);
+
     try {
         if (Settings.updateMessages || forceMsg) showNotification(`${Settings.chatPrefix}`, `&8Searching..`, "push", 1);
 

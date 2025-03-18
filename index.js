@@ -24,10 +24,35 @@ let stopBarUpdating = false;
 
 let stopLoop = false;
 
-let minutes;
-let seconds;
-let durationMinutes;
-let durationSeconds;
+let imageLink = "";
+
+let lastArtworkURL = null;
+let currentArtwork = null;
+
+function drawArtwork(link, x, y, size) {
+    if (!link) return;
+
+    const thread = new Thread(() => {
+        currentArtwork = Image.fromUrl(link);
+
+        register("renderOverlay", () => {
+            if (!Settings.npEnabled) return;
+            if (!currentArtwork) return;
+
+            const imgWidth = currentArtwork.getTextureWidth();
+            const imgHeight = currentArtwork.getTextureHeight();
+
+            const ratio = Math.max(imgWidth / size, imgHeight / size);
+            const width = imgWidth / ratio;
+            const height = imgHeight / ratio;
+
+            currentArtwork.draw(x, y, width, height);
+        });
+    });
+
+    thread.start();
+}
+
 
 let progressText;
 
@@ -39,32 +64,31 @@ function displaySongInfo(songInfo, x, y, isHovering) {
         ? Settings.npSettingsArtist.replace("{artist}", songInfo.artists.join(", "))
         : "Local File";
 
-    const currentProgress = Math.min(localProgress, songInfo.duration_ms);
-    minutes = Math.floor(currentProgress / 60000);
-    seconds = Math.floor((currentProgress % 60000) / 1000).toString().padStart(2, "0");
-    durationMinutes = Math.floor(songInfo.duration_ms / 60000);
-    durationSeconds = Math.floor((songInfo.duration_ms % 60000) / 1000).toString().padStart(2, "0");
-    progressText = Settings.npBarText.replace("{minutes}", `${minutes}`).replace("{seconds}", `${seconds}`).replace("{endminutes}", `${durationMinutes}`).replace("{endseconds}", `${durationSeconds}`);
+    const trackDuration = songInfo.duration_ms / 1000;
+    const currentProgress = Math.min(localProgress / 1000, trackDuration);
+
+    let minutes = Math.floor(currentProgress / 60);
+    let seconds = Math.floor(currentProgress % 60).toString().padStart(2, "0");
+    let durationMinutes = Math.floor(trackDuration / 60);
+    let durationSeconds = Math.floor(trackDuration % 60).toString().padStart(2, "0");
+
+    let progressText = Settings.npBarText
+        .replace("{minutes}", `${minutes}`)
+        .replace("{seconds}", `${seconds}`)
+        .replace("{endminutes}", `${durationMinutes}`)
+        .replace("{endseconds}", `${durationSeconds}`);
 
     const padding = 10;
-    const symbolPadding = 5;
     const lineSpacing = 5;
-    const playSymbol = Settings.npPlaySymbol || "➤";
-    const pauseSymbol = Settings.npPauseSymbol || "││";
-
-    const playSymbolWidth = Renderer.getStringWidth(playSymbol);
-    const paddedPauseSymbol = pauseSymbol.padEnd(playSymbolWidth - Renderer.getStringWidth(pauseSymbol) + pauseSymbol.length);
+    const lineHeight = 10;
+    const progressBarHeight = 5;
+    const artworkSize = 50;
 
     const titleWidth = Renderer.getStringWidth(formattedTitle);
     const artistWidth = Renderer.getStringWidth(formattedArtist);
     const timerWidth = Renderer.getStringWidth(progressText);
-    const symbolWidth = Settings.npPauseButton ? playSymbolWidth : 0;
-
-    const boxWidth = Math.max(titleWidth + symbolWidth + padding * 2 + symbolPadding, artistWidth, timerWidth) + padding * 2;
-
-    const lineHeight = 10;
-    const progressBarHeight = 5;
-    let boxHeight = 3 * lineHeight + 2 * lineSpacing + padding * 2;
+    const boxWidth = Math.max(titleWidth, artistWidth, timerWidth) + padding * 3 + artworkSize;
+    let boxHeight = Math.max(3 * lineHeight + 2 * lineSpacing + padding * 2, artworkSize + padding * 2);
 
     if (Settings.npProgressBar) {
         boxHeight += progressBarHeight + lineSpacing;
@@ -74,66 +98,64 @@ function displaySongInfo(songInfo, x, y, isHovering) {
 
     const boxX = x;
     const boxY = y;
-
     const bgColor = Settings.npBGColor;
     const barColor = Settings.npBarColor;
 
-    Renderer.drawRect(Renderer.color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), Settings.npBGOpacity), boxX, boxY, boxWidth, boxHeight);
+    Renderer.drawRect(Renderer.color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), Settings.npBGOpacity), boxX, boxY, boxWidth + 20, boxHeight + 20);
 
-    Renderer.drawString(formattedTitle, boxX + padding, boxY + padding, Settings.npTextShadow);
-
-    Renderer.drawString(formattedArtist, boxX + padding, boxY + padding + lineHeight + lineSpacing, Settings.npTextShadow);
+    const textX = boxX + padding * 2 + artworkSize;
+    Renderer.drawString(formattedTitle, textX, boxY + padding, Settings.npTextShadow);
+    Renderer.drawString(formattedArtist, textX, boxY + padding + lineHeight + lineSpacing, Settings.npTextShadow);
 
     if (Settings.npProgressBar) {
         const progressBarWidth = boxWidth - padding * 2;
         const progressBarX = boxX + padding;
-        const progressBarY = boxY + padding + 3 * (lineHeight + lineSpacing);
-        const filledBarWidth = Math.floor((currentProgress / songInfo.duration_ms) * progressBarWidth);
+        const progressBarY = boxY + padding + 3 * (lineHeight + lineSpacing) + 30;
+        const filledBarWidth = Math.floor((currentProgress / trackDuration) * progressBarWidth);
 
-        const progressTextX = progressBarX + (progressBarWidth - timerWidth) / 2;
-        Renderer.drawString(progressText, progressTextX, boxY + padding + 2 * (lineHeight + lineSpacing), Settings.npTextShadow);
-
+        Renderer.drawString(progressText, progressBarX + (progressBarWidth - timerWidth) / 2, boxY + padding + 2 * (lineHeight + lineSpacing) + 30, Settings.npTextShadow);
         Renderer.drawRect(Renderer.color(50, 50, 50, 150), progressBarX, progressBarY, progressBarWidth, progressBarHeight);
-
         Renderer.drawRect(Renderer.color(barColor.getRed(), barColor.getGreen(), barColor.getBlue(), Settings.npBarOpacity), progressBarX, progressBarY, filledBarWidth, progressBarHeight);
-
-        if (isHovering && checkHover(progressBarX, progressBarY, progressBarWidth, progressBarHeight)) {
-            isHoveringSymbol = true;
-        } else {
-            isHoveringSymbol = false;
-        }
     }
 
-    if (isHovering && Settings.npCCInstructions && !Settings.npDragGui.isOpen()) {
-        const additionalTextLines = [
+    if (isHovering && Settings.npCCInstructions) {
+        const instructions = [
             "&8Left Click twice to Skip.",
             "&8Right Click twice to Go Back.",
             "&8Middle Click to open Spotify."
         ];
 
-        additionalTextLines.forEach((line, index) => {
+        instructions.forEach((line, index) => {
             const lineWidth = Renderer.getStringWidth(line);
-            const lineX = boxX + (boxWidth - lineWidth) / 2;
-            const lineY = boxY + boxHeight + 10 + (index * 10);
-
-            Renderer.drawString(line, lineX, lineY, true);
+            Renderer.drawString(line, boxX + (boxWidth - lineWidth) / 2, boxY + boxHeight + 10 + index * 10, true);
         });
     }
 
     if (Settings.npPauseButton) {
+        const playSymbol = Settings.npPlaySymbol || "➤";
+        const pauseSymbol = Settings.npPauseSymbol || "││";
+        const playSymbolWidth = Renderer.getStringWidth(playSymbol);
+        const paddedPauseSymbol = pauseSymbol.padEnd(playSymbolWidth - Renderer.getStringWidth(pauseSymbol) + pauseSymbol.length);
+
         const symbol = songInfo.is_playing ? paddedPauseSymbol : playSymbol;
-        const symbolX = boxX + boxWidth - symbolWidth - padding;
+        const symbolX = boxX + boxWidth - playSymbolWidth - padding + 20;
         const symbolY = boxY + padding;
 
         Renderer.drawString(symbol, symbolX, symbolY, true);
 
-        if (checkHover(symbolX, symbolY, symbolWidth, lineHeight)) {
+        if (checkHover(symbolX, symbolY, playSymbolWidth, lineHeight)) {
             isHoveringSymbol = true;
         } else {
             isHoveringSymbol = false;
         }
     }
+
+    if (imageLink && imageLink !== lastArtworkURL) {
+        lastArtworkURL = imageLink;
+        drawArtwork(imageLink, boxX + padding, boxY + padding, artworkSize);
+    }
 }
+
 
 function handleSeekClick(progressBarX, progressBarWidth, songDuration) {
     const mouseX = Client.getMouseX();
@@ -222,7 +244,6 @@ powershell.exe -Command "& {
                                     duration_ms: duration_ms,
                                     progress_ms: response.progress_ms || 0,
                                     is_playing: response.is_playing || false,
-                                    image_link: response.item && response.item.album.images.length > 0 ? response.item.album.images[0].url : "",
                                     currently_playing_type: response.currently_playing_type || "unknown",
                                     volume_percent: response.device.volume_percent || 0,
                                 };
@@ -253,11 +274,79 @@ powershell.exe -Command "& {
     }
 }
 
+function getSongImages() {
+    if (!Settings.npEnabled) return;
+    stopBarUpdating = false;
+
+    const command = `
+powershell.exe -Command "& {
+    $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8;
+    $headers = @{ 'Content-Type' = 'application/json'; 'Authorization' = 'Bearer ${Settings.settingsPremiumSpotToken}' };
+    $url = 'https://api.spotify.com/v1/me/player';
+    $response = Invoke-RestMethod -Uri $url -Method GET -Headers $headers;
+    if ($response.item -and $response.item.album -and $response.item.album.images) {
+        $response.item.album.images | ConvertTo-Json -Compress;
+    } else {
+        Write-Host "No images available";
+    }
+}"`;
+
+    try {
+        const process = java.lang.Runtime.getRuntime().exec(command);
+
+        const checkProcess = () => {
+            if (process.isAlive()) {
+                setTimeout(checkProcess, 50);
+            } else {
+                try {
+                    const reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream(), "UTF-8"));
+                    let line;
+                    let output = "";
+                    while ((line = reader.readLine()) !== null) {
+                        output += line + "\n";
+                    }
+                    reader.close();
+
+                    process.waitFor();
+
+                    if (output.trim()) {
+                        try {
+                            const response = JSON.parse(output.trim());
+
+                            if (response && Array.isArray(response)) {
+                                const images = response.map(image => image.url);
+
+                                imageLink = images.length > 0 ? images[0] : "https://picsum.photos/200"; // placeholder image website
+                            } else {
+                                console.error("SpotPlaying Error: Invalid response structure:", response);
+                            }
+                        } catch (jsonError) {
+                            imageLink = "https://picsum.photos/200";
+                        }
+                    } else {
+                        if (!Settings.settingsDiscordToken) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                        getSpotifyToken(false);
+                    }
+                } catch (readError) {
+                    console.error("SpotPlaying Error: Error reading process output:", readError);
+                }
+            }
+        };
+
+        checkProcess();
+    } catch (e) {
+        console.error(`Error executing PowerShell command: ${e}`);
+    }
+}
+
+
+
 function pingApi() {
     if (stopLoop) return;
 
     if (Settings.npEnabled) {
         getSong();
+        getSongImages();
     }
     setTimeout(() => {
         pingApi();
