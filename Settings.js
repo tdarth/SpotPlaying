@@ -59,14 +59,6 @@ class Settings {
     })
     apiPingRate = "5000";
 
-    @CheckboxProperty({
-        name: "Loading Messages",
-        description: "&7Toggles if you are able to see loading messages on async actions.",
-        category: "Settings",
-        subcategory: "Configuration"
-    })
-    updateMessages = false;
-
     @TextProperty({
         name: "Chat Prefix",
         description: "What do you want the &bChat Prefix&7 to be?",
@@ -120,36 +112,20 @@ class Settings {
     npProgressBar = true;
 
     @CheckboxProperty({
-        name: "&e&oProgress Bar Seek",
-        description: "&7Toggles if clicking a spot in the progress bar updates the song time.",
+        name: "Player Controls",
+        description: "&7Toggles if you are able to use Player Controls found when hovering over the overlay.",
         category: "Now Playing",
         subcategory: "- Toggles -"
     })
-    npSeekBar = true;
+    npPlayerControls = true;
 
     @CheckboxProperty({
-        name: "Pause/Play Button",
-        description: "&7Toggles if you are able to pause/play the current song on the overlay.",
+        name: "Middle Click to Open Spotify",
+        description: "&7Toggles if you are able to open Spotify by middle clicking the overlay.",
         category: "Now Playing",
         subcategory: "- Toggles -"
     })
-    npPauseButton = true;
-
-    @CheckboxProperty({
-        name: "Click Controls",
-        description: "&7Toggles the following controls.\n&82x Left Click Skips, 2x Right Click Previous, Middle Click opens Spotify.",
-        category: "Now Playing",
-        subcategory: "- Toggles -"
-    })
-    npClickControls = true;
-
-    @CheckboxProperty({
-        name: "&e&oShow Instructions",
-        description: "&7Toggles if the Click Control keybinds are shown when hovering.",
-        category: "Now Playing",
-        subcategory: "- Toggles -"
-    })
-    npCCInstructions = true;
+    npMiddleClick = true;
 
     // Position
 
@@ -252,24 +228,6 @@ class Settings {
     })
     npBarOpacity = 200;
 
-    @TextProperty({
-        name: "&e&oPause Symbol",
-        description: "Sets the text of the pause button. &8Leave blank for default.",
-        category: "Now Playing",
-        placeholder: "Enter Text..",
-        subcategory: "Configuration"
-    })
-    npPauseSymbol = "││";
-
-    @TextProperty({
-        name: "&e&oPlay Symbol",
-        description: "Sets the text of the play button. &8Leave blank for default.",
-        category: "Now Playing",
-        placeholder: "Enter Text..",
-        subcategory: "Configuration"
-    })
-    npPlaySymbol = "➤";
-
     @CheckboxProperty({
         name: "Text Shadows",
         description: "&7Toggles if the text in the overlay has shadows.",
@@ -284,13 +242,9 @@ class Settings {
         this.addDependency("&e&oOverlay X", "Overlay Enabled");
         this.addDependency("&e&oOverlay Y", "Overlay Enabled");
         this.addDependency("&e&oSnap Size", "Overlay Enabled");
-        this.addDependency("&e&oShow Instructions", "Click Controls");
-        this.addDependency("&e&oProgress Bar Seek", "Progress Bar");
         this.addDependency("&e&oProgress Bar Color", "Progress Bar");
         this.addDependency("&e&oProgress Bar Text", "Progress Bar");
         this.addDependency("&e&oProgress Bar Opacity", "Progress Bar");
-        this.addDependency("&e&oPause Symbol", "Pause/Play Button");
-        this.addDependency("&e&oPlay Symbol", "Pause/Play Button");
         this.setCategoryDescription("Now Playing", "&c&l!&r &7First time? Please run &a/spot tutorial &7before modifying options. &c&l!&r\nOptions titled &e&olike this&r require another feature to be enabled.");
         this.setCategoryDescription("Settings", "&7A module by &atdarth &7and &2Github Copilot&7.\n&c&lDo not share these tokens with anyone!&r");
     }

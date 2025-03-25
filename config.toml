@@ -6,7 +6,6 @@
 
 	[settings.configuration]
 		api_ping_rate = "5000"
-		loading_messages = false
 
 	[settings.api_access]
 		spotify_user_id = ""
@@ -18,14 +17,11 @@
 
 	[now_playing.-_toggles_-]
 		overlay_enabled = false
-		"pause/play_button" = true
-		"&e&oshow_instructions" = true
+		player_controls = true
+		middle_click_to_open_spotify = true
 		progress_bar = true
-		"&e&oprogress_bar_seek" = true
-		click_controls = true
 
 	[now_playing.configuration]
-		"&e&oplay_symbol" = "➤"
 		song_title_text = "{song}"
 		text_shadows = true
 		overlay_color = "255,0,0,0"
@@ -33,8 +29,7 @@
 		"&e&oprogress_bar_opacity" = 200
 		overlay_opacity = 100
 		artist_title_text = "&7{artist}"
-		"&e&oprogress_bar_color" = "255,17,255,0"
-		"&e&opause_symbol" = "││"
+		"&e&oprogress_bar_color" = "255,0,0,0"
 
 	[now_playing.position]
 		"&e&osnap_size" = 5

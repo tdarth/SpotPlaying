@@ -30,4 +30,5 @@ Everything in this module is customizable! From any text that is rendered on you
 After installing the module, type ```/spot tutorial``` in-game to setup the module.
 
 # Preview Screenshots
-![Screenshot showcasing the overlay SpotPlaying provides in game, playing the song Lag Train by inabakumori.](https://i.imgur.com/rCx2A3P.png)
+![Screenshot showcasing the overlay SpotPlaying provides in game, playing the song Lost Umbrella by 稲葉曇.](https://i.imgur.com/CoOl6J3.png)
+![Screenshot showcasing the overlay SpotPlaying provides in game, showcasing the player controls with the song The Vampire by DECO*27](https://i.imgur.com/Hbo6vru.png)

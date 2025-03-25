@@ -3,7 +3,7 @@ const TokenInstructionMessage = new Message(
 );
 
 const SpotUserIDInstructionMessage = new Message(
-    new TextComponent("&8[&a&lSpot&2&oPlaying&8] &fTo obtain your &aSpotify User ID&f, please click &e&l&nHERE&f &fand copy the string of characters found under &7Username&f. You may have to login to your &aSpotify Account&f.\n").setClick("run_command", "/spotopenspotuseridtutorial").setHoverValue("Click to open a website containing instructions on how to obtain your &9Discord Token&f.")
+    new TextComponent("&8[&a&lSpot&2&oPlaying&8] &fTo obtain your &aSpotify User ID&f, please click &e&l&nHERE&f &fand copy the string of characters found under &7Username&f. You may have to login to your &aSpotify Account&f.\n").setClick("run_command", "/spotopenspotuseridtutorial").setHoverValue("Click to open a website containing instructions on how to obtain your &aSpotify Username&f.")
 );
 
 export function tutorial(progress = 0) {
