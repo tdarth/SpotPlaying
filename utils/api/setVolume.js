@@ -21,6 +21,10 @@ export function setVolume(amount) {
         })
         .catch(error => {
             if (error.includes("volume_percent must be in the range 0 to 100")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7You can only set the volume\nbetween&r &c0-100&r&7.&r`, "push", 5);
+            if (error.includes("The access token expired") || error.includes("Only valid bearer authentication supported") || error.includes("Invalid access token")) {
+                if (!Settings.settingsDiscordToken) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                else return getSpotifyToken();
+            }
             if (error.includes("Device not found")) {
                 if (Settings.settingsDiscordToken) {
                     return getDeviceID(true);

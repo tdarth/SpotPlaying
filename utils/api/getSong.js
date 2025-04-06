@@ -43,7 +43,7 @@ export function getSong() {
                     is_playing: data.is_playing || false,
                     currently_playing_type: data.currently_playing_type || "unknown",
                     volume_percent: data.device.volume_percent || 0,
-                    song_image: data.item?.album?.images?.[0]?.url || "https://picsum.photos/200"
+                    song_image: data.item?.album?.images?.[Settings.npImageQuality]?.url || "https://picsum.photos/200"
                 };
 
                 const now = Date.now();

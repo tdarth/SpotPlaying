@@ -25,6 +25,10 @@ export function togglePlayback(method) {
             else return showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Song paused.`, "push", 1);
         })
         .catch(error => {
+            if (error.includes("The access token expired") || error.includes("Only valid bearer authentication supported") || error.includes("Invalid access token")) {
+                if (!Settings.settingsDiscordToken) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                else return getSpotifyToken();
+            }
             if (error.includes("Player command failed: Restriction violated")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Slow down!`, "push", 2);
             if (error.includes("Device not found")) {
                 if (Settings.settingsDiscordToken) {

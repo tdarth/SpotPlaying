@@ -1,6 +1,7 @@
 import { Keybind } from "../../KeybindFix";
 
 import { state } from "./variables";
+import { showNotification } from "./notification";
 import { seek } from "../utils/api/seek";
 import { setVolume } from "../utils/api/setVolume";
 import { togglePlayback } from "../utils/api/togglePlayback";

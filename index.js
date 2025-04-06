@@ -130,7 +130,7 @@ register("command", (...arg) => {
                             showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Success!\n&aThe module is now setup.`, "push", 2);
                             Settings.npEnabled = true;
                         } else {
-                            ChatLib.chat(`\n\n${Settings.chatPrefix}&cAn error occured during setup.\n&4Make sure the Spotify Desktop App is open!\n&4If you still get errors, go through the tutorial again. &c/spot tutorial&4.\n\n`)
+                            ChatLib.chat(`\n\n${Settings.chatPrefix}&cAn error occured during setup.\n&4If multiple devices showed up, select the correct one and enable the overlay in /spot. If none showed up, make sure the desktop app is open.\n&4If you still get errors, go through the tutorial again. &c/spot tutorial&4.\n\n`)
                             showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Error during setup.`, "push", 1);
                         }
                     }, 2500);
@@ -164,7 +164,7 @@ register("command", (...arg) => {
                         showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Success!\n&aThe module is now setup.`, "push", 2);
                         Settings.npEnabled = true;
                     } else {
-                        ChatLib.chat(`\n\n${Settings.chatPrefix}&cAn error occured during setup.\n&4Make sure the Spotify Desktop App is open!\n&4If you still get errors, go through the tutorial again. &c/spot tutorial&4.\n\n`)
+                        ChatLib.chat(`\n\n${Settings.chatPrefix}&cAn error occured during setup.\n&4If multiple devices showed up, select the correct one and enable the overlay in /spot. If none showed up, make sure the desktop app is open.\n&4If you still get errors, go through the tutorial again. &c/spot tutorial&4.\n\n`)
                         showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Error during setup.`, "push", 1);
                     }
                 }, 2500);
@@ -193,10 +193,12 @@ register("command", () => {
 
 ChatLib.chat(`\n&8[&a&lSpot&2&oPlaying&8] &f${version} &7by &btdarth &a&lloaded. &7(/spotify).\n`);
 
-if (!Settings.settingsDiscordToken) {
-    setTimeout(() => {
-        ChatLib.chat("\n\n&8[&a&lSpot&2&oPlaying&8]\n&fType &2/spot tutorial &fto setup the module!\n\n")
-    }, 1250);
-}
+register("worldLoad", () => {
+    if (!Settings.settingsDiscordToken) {
+        setTimeout(() => {
+            ChatLib.chat("\n\n&8[&a&lSpot&2&oPlaying&8]\n&fType &2/spot tutorial &fto setup the module!\n\n")
+        }, 1250);
+    }
+})
 
 pingApi();

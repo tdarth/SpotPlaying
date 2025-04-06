@@ -1,7 +1,15 @@
+import Settings from "../Settings";
+
 const EssentialAPI = Java.type('gg.essential.api.EssentialAPI');
 const EssentialNotifs = EssentialAPI.getNotifications();
+const EssentialConfig = EssentialAPI.getConfig();
+
+const EnableNotifications = new Message(
+    new TextComponent(`${Settings.chatPrefix}&fEssential Notifications are &cdisabled.\n&fClick this message to &aenable&f them. (Required for Module).`).setClick("run_command", "/spotenablenotifications").setHoverValue(`${Settings.chatPrefix}&7Click to enable notifications.`)
+);
 
 export function showNotification(title, message, type, length, action, action2) {
+    if (EssentialConfig.disableAllNotifications) return ChatLib.chat(EnableNotifications);
     switch (type) {
         case "push":
             if (length) {
@@ -29,3 +37,8 @@ export function showNotification(title, message, type, length, action, action2) 
             throw new Error(`Unknown notification type: ${type}`);
     }
 }
+
+register("command", () => {
+    EssentialConfig.disableAllNotifications = false;
+    ChatLib.chat(`${Settings.chatPrefix}&fEssential Notifications have been &a&nenabled&f.`);
+}).setName("spotenablenotifications");

@@ -19,19 +19,22 @@ export function playFromID(id, name) {
             }
         }
     })
-    .then(() => {
-        getSong();
-        showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Playing\n&f${name}&7.`, "push", 1);
-    })
-    .catch(error => {
-        if (error.includes("The access token expired") || error.includes("Only valid bearer authentication supported") || error.includes("Invalid access token")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
-        if (error.includes("Device not found")) {
-            if (Settings.settingsDiscordToken) {
-                return getDeviceID(true);
-            } else {
-                return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid&r &cDevice ID&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+        .then(() => {
+            getSong();
+            showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Playing\n&f${name}&7.`, "push", 1);
+        })
+        .catch(error => {
+            if (error.includes("The access token expired") || error.includes("Only valid bearer authentication supported") || error.includes("Invalid access token")) {
+                if (!Settings.settingsDiscordToken) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                else return getSpotifyToken();
             }
-        }
-        ChatLib.chat(`${Settings.chatPrefix}&cAn error occurred. &4${error}`);
-    });
+            if (error.includes("Device not found")) {
+                if (Settings.settingsDiscordToken) {
+                    return getDeviceID(true);
+                } else {
+                    return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid&r &cDevice ID&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                }
+            }
+            ChatLib.chat(`${Settings.chatPrefix}&cAn error occurred. &4${error}`);
+        });
 }

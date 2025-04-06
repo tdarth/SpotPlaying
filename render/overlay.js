@@ -3,11 +3,14 @@ import { state } from "../utils/variables";
 import { togglePlayback } from "../utils/api/togglePlayback";
 import { navigatePlayer } from "../utils/api/navigatePlayer";
 import { openSpotify } from "../utils/openSpotify";
+import { getSong } from "../utils/api/getSong";
 
 let lastArtworkURL = null;
 let currentArtwork = null;
 let overlayWidth = 0;
 let overlayHeight = 0;
+
+let oldImageSetting = Settings.npImageQuality;
 
 const iconSize = 20;
 const iconSpacing = 10;
@@ -16,6 +19,7 @@ const settingsGui = Java.type("gg.essential.vigilance.gui.SettingsGui");
 
 export function displaySongInfo(x, y) {
     if (!state.currentSongInfo || !Settings.npEnabled) return;
+    if (Settings.npImageQuality != oldImageSetting) { oldImageSetting = Settings.npImageQuality; getSong(); }
 
     const { name, artists, duration_ms } = state.currentSongInfo;
     const formattedTitle = Settings.npSettingsSong.replace("{song}", name);

@@ -29,7 +29,8 @@
 		"&e&oprogress_bar_opacity" = 200
 		overlay_opacity = 100
 		artist_title_text = "&7{artist}"
-		"&e&oprogress_bar_color" = "255,7,255,0"
+		"&e&oprogress_bar_color" = "255,5,255,0"
+		image_quality = 1
 
 	[now_playing.position]
 		"&e&osnap_size" = 5

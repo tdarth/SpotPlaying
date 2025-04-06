@@ -1,3 +1,6 @@
+const EssentialAPI = Java.type('gg.essential.api.EssentialAPI');
+const EssentialConfig = EssentialAPI.getConfig();
+
 const TokenInstructionMessage = new Message(
     new TextComponent("&8[&a&lSpot&2&oPlaying&8] &fTo obtain your &9Discord Token&f, please click &e&l&nHERE&f &ffor instructions.\n").setClick("run_command", "/spotopendiscordtokentutorial").setHoverValue("Click to open a website containing instructions on how to obtain your &9Discord Token&f.")
 );
@@ -8,6 +11,7 @@ const SpotUserIDInstructionMessage = new Message(
 
 export function tutorial(progress = 0) {
     if (!progress) {
+        EssentialConfig.disableAllNotifications = false;
         ChatLib.chat(`\n&8[&a&lSpot&2&oPlaying&8] &fThank you for installing &a&lSpot&2&oPlaying&f!\n`)
         setTimeout(() => {
             ChatLib.chat(`&8[&a&lSpot&2&oPlaying&8] &fThis module requires your &cDiscord Token&f, &cSpotify User ID&f, and &4Linking your Spotify Account with your Discord Account&f.\n`)

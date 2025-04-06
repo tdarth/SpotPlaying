@@ -24,7 +24,10 @@ export function search(limit = 10, query) {
         showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Showing results for query\n&f${query.replaceAll("%20", " ")}&7.`, "push", 2);
     })
     .catch(error => {
-        if (error.includes("The access token expired") || error.includes("Only valid bearer authentication supported") || error.includes("Invalid access token")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+        if (error.includes("The access token expired") || error.includes("Only valid bearer authentication supported") || error.includes("Invalid access token")) {
+            if (!Settings.settingsDiscordToken) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+            else return getSpotifyToken();
+        }
         if (error.includes("Invalid limit")) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7You can only search for\n&f0-50&r &7songs at one time.`, "push", 5);
         ChatLib.chat(`${Settings.chatPrefix}&cAn error occurred. &4${error}`);
     });

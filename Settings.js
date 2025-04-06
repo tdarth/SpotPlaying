@@ -190,6 +190,15 @@ class Settings {
     })
     npBarText = "&a{minutes}:{seconds} / {endminutes}:{endseconds}";
 
+    @SelectorProperty({
+        name: "Image Quality",
+        description: "Depending on the image, a lower quality may look less pixelated.",
+        category: "Now Playing",
+        subcategory: "Configuration",
+        options: ["640x640", "300x300", "60x60"]
+    })
+    npImageQuality = 0;
+
     @ColorProperty({
         name: "Overlay Color",
         description: "&7The background color of the overlay.",
