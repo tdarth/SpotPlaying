@@ -4,6 +4,7 @@ import Settings from "../../Settings";
 import { showNotification } from "../notification";
 import { getSong } from "./getSong";
 import { getDeviceID } from "./getDeviceID";
+import { getSpotifyToken } from "./getSpotifyToken";
 
 export function seek(time) {
     fetch(`https://api.spotify.com/v1/me/player/seek?device_id=${Settings.settingsDeviceID}&position_ms=${time}`, {

@@ -5,6 +5,7 @@ import { getSong } from "./getSong";
 import { showNotification } from "../notification";
 import { getDeviceID } from "./getDeviceID";
 import { state } from "../variables";
+import { getSpotifyToken } from "./getSpotifyToken";
 
 export function togglePlayback(method) {
     if (state.currentSongInfo.is_playing && method == "play") return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Song is already playing!`, "push", 2);

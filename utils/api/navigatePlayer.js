@@ -4,6 +4,7 @@ import Settings from "../../Settings";
 import { getSong } from "./getSong";
 import { showNotification } from "../notification";
 import { getDeviceID } from "./getDeviceID";
+import { getSpotifyToken } from "./getSpotifyToken";
 
 export function navigatePlayer(method) {
     fetch(`https://api.spotify.com/v1/me/player/${method}?device_id=${Settings.settingsDeviceID}`, {
@@ -27,6 +28,10 @@ export function navigatePlayer(method) {
                 } else {
                     return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid&r &cDevice ID&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
                 }
+            }
+            if (error.includes("The access token expired") || error.includes("Only valid bearer authentication supported") || error.includes("Invalid access token")) {
+                if (!Settings.settingsDiscordToken) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid or expired&r &cSpotify Token&r&7.\nPlease update options found in&r &8/spotify&r&7.`, "push", 5);
+                else return getSpotifyToken();
             }
             ChatLib.chat(`${Settings.chatPrefix}&cAn error occurred. &4${error}`);
         });

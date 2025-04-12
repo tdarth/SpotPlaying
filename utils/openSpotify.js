@@ -9,7 +9,7 @@ export function openSpotify() {
                 java.awt.Desktop.getDesktop().browse(new java.net.URI("https://open.spotify.com"));
             } catch (e) {
                 ChatLib.chat(`${Settings.chatPrefix}&cFailed to open Spotify. &4Check console for errors.`);
-                console.log(`SpotPlaying Error: ${e}`);
+                console.error(`SpotPlaying Error: ${e}`);
             }
         }
     } catch (e) {
@@ -17,7 +17,7 @@ export function openSpotify() {
             java.awt.Desktop.getDesktop().browse(new java.net.URI("https://open.spotify.com"));
         } catch (e) {
             ChatLib.chat(`${Settings.chatPrefix}&cFailed to open Spotify. &4Check console for errors.`);
-            console.log(`SpotPlaying Error: ${e}`);
+            console.error(`SpotPlaying Error: ${e}`);
         }
     }
 }

@@ -4,6 +4,7 @@ import Settings from "../../Settings";
 import { showNotification } from "../notification";
 import { getDeviceID } from "./getDeviceID";
 import { getSong } from "./getSong";
+import { getSpotifyToken } from "./getSpotifyToken";
 
 export function playFromID(id, name) {
     fetch(`https://api.spotify.com/v1/me/player/play?device_id=${Settings.settingsDeviceID}`, {

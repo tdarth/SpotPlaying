@@ -2,6 +2,7 @@ import { fetch } from "../../../tska/polyfill/Fetch";
 
 import Settings from "../../Settings";
 import { showNotification } from "../notification";
+import { getSpotifyToken } from "./getSpotifyToken";
 
 let device_ids = [];
 
