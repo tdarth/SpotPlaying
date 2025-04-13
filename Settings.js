@@ -190,9 +190,19 @@ class Settings {
     })
     npBarText = "&a{minutes}:{seconds} / {endminutes}:{endseconds}";
 
+    @SliderProperty({
+        name: "Overlay Size",
+        description: "The size of the Overlay.\n&8Text size is not changed. 50 is the default.",
+        category: "Now Playing",
+        subcategory: "Configuration",
+        min: 1,
+        max: 100
+    })
+    npSizeMultiplier = 50;
+
     @SelectorProperty({
         name: "Image Quality",
-        description: "Depending on the image, a lower quality may look less pixelated.",
+        description: "Depending on the Overlay Size, a lower/higher quality may look less pixelated.",
         category: "Now Playing",
         subcategory: "Configuration",
         options: ["640x640", "300x300", "60x60"]
@@ -244,6 +254,15 @@ class Settings {
         subcategory: "Configuration"
     })
     npTextShadow = true;
+
+    // Miscellaneous
+    @CheckboxProperty({
+        name: "Chat Commands",
+        description: "&7Sends your playing song if a player types &f!song&7 in Party, Guild, or Officer chat.",
+        category: "Now Playing",
+        subcategory: "Miscellaneous"
+    })
+    chatCommands = true;
 
     constructor() {
         this.initialize(this);

@@ -19,6 +19,7 @@ import { updateLocalProgress } from "./utils/updateLocalProgress";
 import { playFromID } from "./utils/api/playFromID";
 import "./render/dragGui";
 import "./utils/keybinds";
+import "./utils/chatCommand";
 
 const version = getVersion();
 
@@ -146,7 +147,7 @@ register("command", (...arg) => {
         case "info":
         case "commands":
         case "cmds":
-            ChatLib.chat(`${Settings.chatPrefix}&f/spot &7<copy | device | info | open | pause | play | playfromid <id> | next | previous | search <query> <limit> | seek <time> | token | tutorial | version | volume <1-100>>`);
+            ChatLib.chat(`${Settings.chatPrefix}&f/spot &7<copy | device | info | open | pause | play | playfromid <id> | next | previous | search <query> <limit> | seek <time> | send <all/party/guild> | token | tutorial | version | volume <1-100>>`);
             break;
         case "search":
             if (!arg[1] || !arg[2]) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid usage.\n&c/spot search <limit> <query>&7.`, "push", 3);
@@ -170,8 +171,22 @@ register("command", (...arg) => {
                 }, 2500);
             }, 2500);
             break;
+        case "send":
+            if (state.currentSongInfo.name === "Advertisement") return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Wait for the &cAD&7 to finish.`, "push", 3);
+            if (!arg[1] || arg[1] === "party") {
+                showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Sent playing song to &aParty&r\n&7chat.`, "push", 2);
+                ChatLib.command(`pc I'm listening to: ${state.currentSongInfo.name} by ${state.currentSongInfo.artists.join(", ")} on /ct import SpotPlaying.`)
+            } else if (arg[1] === "guild") {
+                showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Sent playing song to &aGuild&r\n&7chat.`, "push", 2);
+                ChatLib.command(`gc I'm listening to: ${state.currentSongInfo.name} by ${state.currentSongInfo.artists.join(", ")} on /ct import SpotPlaying.`)
+
+            } else if (arg[1] === "all") {
+                showNotification(`${Settings.chatPrefix}`, `&a&l✔&r &7Sent playing song to &aAll&r\n&7chat.`, "push", 2);
+                ChatLib.command(`ac I'm listening to: ${state.currentSongInfo.name} by ${state.currentSongInfo.artists.join(", ")} on /ct import SpotPlaying.`)
+            }
+            break;
         default:
-            ChatLib.chat(`${Settings.chatPrefix}&cInvalid command.\n&7Usage: /spot <copy | device | info | open | version | pause | play | playfromid <id> | next | previous | search <query> <limit> | seek <time> | token | tutorial | volume <1-100>>`);
+            ChatLib.chat(`${Settings.chatPrefix}&cInvalid command.\n&7Usage: /spot <copy | device | info | open | version | pause | play | playfromid <id> | next | previous | search <query> <limit> | seek <time> | send <all/party/guild> | token | tutorial | volume <1-100>>`);
     }
 }).setName("spotplaying").setAliases("spotifyplaying", "spot", "spotify", "playingspot", "playingspotify");
 
@@ -192,6 +207,10 @@ register("command", () => {
 }).setName("spotopenspotuseridtutorial")
 
 ChatLib.chat(`\n&8[&a&lSpot&2&oPlaying&8] &f${version} &7by &btdarth &a&lloaded. &7(/spotify).\n`);
+
+setTimeout(() => {
+    ChatLib.chat("\n\n&8[&a&lSpot&2&oPlaying&8]\n&fType &2/spot tutorial &fto setup the module!\n\n")
+}, 1250);
 
 register("worldLoad", () => {
     if (!Settings.settingsDiscordToken) {
