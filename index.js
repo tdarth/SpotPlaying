@@ -208,9 +208,11 @@ register("command", () => {
 
 ChatLib.chat(`\n&8[&a&lSpot&2&oPlaying&8] &f${version} &7by &btdarth &a&lloaded. &7(/spotify).\n`);
 
-setTimeout(() => {
-    ChatLib.chat("\n\n&8[&a&lSpot&2&oPlaying&8]\n&fType &2/spot tutorial &fto setup the module!\n\n")
-}, 1250);
+if (!Settings.settingsDiscordToken) {
+    setTimeout(() => {
+        ChatLib.chat("\n\n&8[&a&lSpot&2&oPlaying&8]\n&fType &2/spot tutorial &fto setup the module!\n\n")
+    }, 1250);
+}
 
 register("worldLoad", () => {
     if (!Settings.settingsDiscordToken) {
