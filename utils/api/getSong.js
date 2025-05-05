@@ -3,6 +3,9 @@ import { fetch } from "../../../tska/polyfill/Fetch";
 
 import Settings from "../../Settings";
 import { getSpotifyToken } from "./getSpotifyToken";
+import { getLyrics } from "./getLyrics";
+
+let previousSongName = "";
 
 export function getSong() {
     if (!Settings.npEnabled) return;
@@ -33,6 +36,11 @@ export function getSong() {
                         return nameMatch;
                     });
                     duration_ms = data.item.duration_ms || 0;
+                }
+
+                if (name !== previousSongName) {
+                    getLyrics(name, artists.join(" "));
+                    previousSongName = name;
                 }
 
                 state.currentSongInfo = {

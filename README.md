@@ -10,6 +10,7 @@ The _all-in-one_ Spotify Integration for Minecraft.
 - A progress bar that shows your length into a song.
 - Player Controls, including Pausing/Skipping, Rewinding/Fastforwarding, and Volume Controls.
 - Search for playlists and play them directly in-game.
+- Show the lyrics of a song while it is playing.
 - Keybinds to control everything from your keyboard.
 
 Everything in this module is customizable! From any text that is rendered on your screen, to colors, to opacity, it can be changed.

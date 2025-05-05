@@ -14,6 +14,54 @@ let oldImageSetting = Settings.npImageQuality;
 
 const settingsGui = Java.type("gg.essential.vigilance.gui.SettingsGui");
 
+function shortenTextToFitWithHighlight(text, maxWidth, currentTimeMs, lyrics, currentLine) {
+    const ellipsis = "...";
+    let shortenedText = text;
+
+    while (Renderer.getStringWidth(shortenedText + ellipsis) > maxWidth && shortenedText.length > 0) {
+        shortenedText = shortenedText.slice(0, -1);
+    }
+
+    const visibleText = shortenedText;
+
+    let highlightedLyrics = "";
+    const lyricWords = visibleText.split(' ');
+    const lineStartTime = lyrics[currentLine].time;
+    const lineEndTime = lyrics[currentLine + 1]?.time ?? (lineStartTime + 4000);
+    const lineDuration = lineEndTime - lineStartTime;
+
+    const wordWeights = lyricWords.map(w => w.length);
+    const totalWeight = wordWeights.reduce((a, b) => a + b, 0);
+
+    let elapsed = 0;
+
+    for (let i = 0; i < lyricWords.length; i++) {
+        const word = lyricWords[i];
+        const weight = wordWeights[i];
+        const wordDuration = (weight / totalWeight) * lineDuration;
+
+        const wordStartTime = lineStartTime + elapsed;
+        const wordEndTime = wordStartTime + wordDuration;
+
+        const color = (currentTimeMs >= wordStartTime && currentTimeMs < wordEndTime) ? "&f" : "&7";
+        highlightedLyrics += color + word + " ";
+
+        elapsed += wordDuration;
+    }
+
+    highlightedLyrics += "&7" + ellipsis;
+
+    return highlightedLyrics;
+}
+
+function shortenTextToFit(text, maxWidth) {
+    const ellipsis = "...";
+    while (Renderer.getStringWidth(text + ellipsis) > maxWidth && text.length > 0) {
+        text = text.slice(0, -1);
+    }
+    return text + ellipsis;
+}
+
 export function displaySongInfo(x, y) {
     if (!state.currentSongInfo || !Settings.npEnabled) return;
     if (Settings.npImageQuality != oldImageSetting) { oldImageSetting = Settings.npImageQuality; getSong(); }
@@ -34,10 +82,10 @@ export function displaySongInfo(x, y) {
         .replaceAll("{endminutes}", `${durationMinutes}`)
         .replaceAll("{endseconds}", `${durationSeconds}`);
 
-    const padding = 10 * Settings.npSizeMultiplier / 50; 
-    const lineSpacing = 5 * Settings.npSizeMultiplier / 50; 
-    const lineHeight = 10 * Settings.npSizeMultiplier / 50; 
-    const progressBarHeight = 5 * Settings.npSizeMultiplier / 50; 
+    const padding = 10 * Settings.npSizeMultiplier / 50;
+    const lineSpacing = 5 * Settings.npSizeMultiplier / 50;
+    const lineHeight = 10 * Settings.npSizeMultiplier / 50;
+    const progressBarHeight = 5 * Settings.npSizeMultiplier / 50;
     const artworkSize = 50 * Settings.npSizeMultiplier / 50;
 
     const titleWidth = Renderer.getStringWidth(formattedTitle);
@@ -50,6 +98,12 @@ export function displaySongInfo(x, y) {
         boxHeight += progressBarHeight + lineSpacing;
     } else {
         boxHeight -= lineSpacing * 3;
+    }
+
+    let lyricsHeight = 0;
+    if (Settings.npLyrics && state.lyrics?.length > 0) {
+        lyricsHeight = 10 * Settings.npSizeMultiplier / 50;
+        boxHeight += lyricsHeight;
     }
 
     overlayWidth = boxWidth;
@@ -121,6 +175,88 @@ export function displaySongInfo(x, y) {
         Renderer.drawString("O", icon2X + iconSize / 4, iconBoxY + 5 * Settings.npSizeMultiplier / 50, Settings.npTextShadow);
         Renderer.drawString(">", icon3X + iconSize / 4, iconBoxY + 5 * Settings.npSizeMultiplier / 50, Settings.npTextShadow);
     }
+    let previousSongTitle = "";
+
+    if (state.lyrics?.length > 0 && Settings.npLyrics) {
+        const currentTimeMs = state.localProgress;
+        let currentLine = state.currentLyricLine;
+
+        if (state.currentSongInfo.name !== previousSongTitle) {
+            currentLine = 0;
+            previousSongTitle = state.currentSongInfo.name;
+        }
+
+        if (currentTimeMs < state.lyrics[0].time) return;
+
+        if (currentTimeMs >= state.lyrics[currentLine + 1]?.time) {
+            while (currentLine < state.lyrics.length - 1 && currentTimeMs >= state.lyrics[currentLine + 1].time) {
+                currentLine++;
+            }
+        } else if (currentTimeMs < state.lyrics[currentLine]?.time) {
+            while (currentLine > 0 && currentTimeMs < state.lyrics[currentLine].time) {
+                currentLine--;
+            }
+        }
+
+        state.currentLyricLine = currentLine;
+
+        const lyricY = y + padding + 3 * (lineHeight + lineSpacing) +
+            (Settings.npProgressBar ? 30 * Settings.npSizeMultiplier / 50 + progressBarHeight + lineSpacing : 15 * Settings.npSizeMultiplier / 50);
+
+        if (Settings.npBetterLyrics) {
+            const lyricText = state.lyrics[currentLine]?.text ?? "";
+            if (!lyricText) return;
+
+            const lyricWords = lyricText.split(' ');
+
+            const lineStartTime = state.lyrics[currentLine].time;
+            const lineEndTime = state.lyrics[currentLine + 1]?.time ?? (lineStartTime + 4000);
+            const lineDuration = lineEndTime - lineStartTime;
+
+            const wordWeights = lyricWords.map(w => w.length);
+            const totalWeight = wordWeights.reduce((a, b) => a + b, 0);
+
+            let highlightedLyrics = "";
+            let elapsed = 0;
+
+            for (let i = 0; i < lyricWords.length; i++) {
+                const word = lyricWords[i];
+                const weight = wordWeights[i];
+                const wordDuration = (weight / totalWeight) * lineDuration;
+
+                const wordStartTime = lineStartTime + elapsed;
+                const wordEndTime = wordStartTime + wordDuration;
+
+                const color = (currentTimeMs >= wordStartTime && currentTimeMs < wordEndTime) ? "&f" : "&7";
+                highlightedLyrics += color + word + " ";
+
+                elapsed += wordDuration;
+            }
+
+            let finalLyrics = highlightedLyrics;
+
+            if (Settings.npShortenLyrics && Renderer.getStringWidth(finalLyrics) > boxWidth - 10) {
+                const stripped = finalLyrics.removeFormatting();
+                const shortened = shortenTextToFitWithHighlight(stripped, boxWidth - 10, currentTimeMs, state.lyrics, currentLine);
+                finalLyrics = shortened;
+            }
+
+            const lyricX = x + (boxWidth - Renderer.getStringWidth(finalLyrics)) / 2;
+            Renderer.drawString(finalLyrics, lyricX, lyricY, Settings.npTextShadow);
+        } else {
+            const lyricText = state.lyrics[currentLine]?.text ?? "";
+            if (!lyricText) return;
+
+            let finalText = lyricText;
+
+            if (Settings.npShortenLyrics && Renderer.getStringWidth(finalText) > boxWidth - 10) {
+                finalText = shortenTextToFit(finalText, boxWidth - 10);
+            }
+
+            const lyricX = x + (boxWidth - Renderer.getStringWidth(finalText)) / 2;
+            Renderer.drawString(finalText, lyricX, lyricY, Settings.npTextShadow);
+        }
+    }
 }
 
 register('clicked', (x, y, button, held) => {
@@ -155,7 +291,7 @@ register('clicked', (x, y, button, held) => {
     if (button == 2 && !held && Client.isInGui() && Settings.npMiddleClick) {
         if (Client.currentGui.get() instanceof settingsGui) return;
         if (Settings.npDragGui.isOpen()) return;
-        
+
         const { width, height } = getOverlayDimensions();
         if (x >= 0 && x <= width && y >= 0 && y <= height) openSpotify();
     }

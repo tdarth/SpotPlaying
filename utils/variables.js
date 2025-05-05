@@ -6,5 +6,6 @@ export const state = {
     progressText: "",
     imageX: 0,
     imageY: 0,
-    imageLink: ""
+    imageLink: "",
+    lyrics: null
 };

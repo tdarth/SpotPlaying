@@ -70,7 +70,7 @@ class Settings {
 
     @ButtonProperty({
         name: "Reload ChatTriggers",
-        description: "&7Reloading the module is &crequired&7 for some changes to apply.",
+        description: "&7Reloading the module can &8*hopefully* &7fix any weird bugs you may get.",
         placeholder: "Reload",
         category: "Settings",
         subcategory: "Other"
@@ -127,8 +127,31 @@ class Settings {
     })
     npMiddleClick = true;
 
-    // Position
+    @CheckboxProperty({
+        name: "Song Lyrics",
+        description: "&7Toggles if song lyrics on supported songs are displayed under the overlay.",
+        category: "Now Playing",
+        subcategory: "- Toggles -"
+    })
+    npLyrics = false;
 
+    @CheckboxProperty({
+        name: "&e&oHighlight Song Lyrics",
+        description: "&7Toggles if song lyrics are highlighted when they are said.\n&8The accuracy of this depends on the song.",
+        category: "Now Playing",
+        subcategory: "- Toggles -"
+    })
+    npBetterLyrics = false;
+
+    @CheckboxProperty({
+        name: "&e&oShorten Song Lyrics",
+        description: "&7Toggles if song lyrics are cut off... if they don't fit the box.",
+        category: "Now Playing",
+        subcategory: "- Toggles -"
+    })
+    npShortenLyrics = true;
+
+    // Position
     
     @SliderProperty({
         name: "&e&oOverlay X",
@@ -273,6 +296,8 @@ class Settings {
         this.addDependency("&e&oProgress Bar Color", "Progress Bar");
         this.addDependency("&e&oProgress Bar Text", "Progress Bar");
         this.addDependency("&e&oProgress Bar Opacity", "Progress Bar");
+        this.addDependency("&e&oHighlight Song Lyrics", "Song Lyrics");
+        this.addDependency("&e&oShorten Song Lyrics", "Song Lyrics");
         this.setCategoryDescription("Now Playing", "&c&l!&r &7First time? Please run &a/spot tutorial &7before modifying options. &c&l!&r\nOptions titled &e&olike this&r require another feature to be enabled.");
         this.setCategoryDescription("Settings", "&7A module by &atdarth &7and &2Github Copilot&7.\n&c&lDo not share these tokens with anyone!&r");
     }

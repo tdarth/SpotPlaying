@@ -17,6 +17,7 @@ import { navigatePlayer } from "./utils/api/navigatePlayer";
 import { displaySongInfo } from "./render/overlay";
 import { updateLocalProgress } from "./utils/updateLocalProgress";
 import { playFromID } from "./utils/api/playFromID";
+import { getLyrics } from "./utils/api/getLyrics";
 import "./render/dragGui";
 import "./utils/keybinds";
 import "./utils/chatCommand";
@@ -147,7 +148,7 @@ register("command", (...arg) => {
         case "info":
         case "commands":
         case "cmds":
-            ChatLib.chat(`${Settings.chatPrefix}&f/spot &7<copy | device | info | open | pause | play | playfromid <id> | next | previous | search <query> <limit> | seek <time> | send <all/party/guild> | token | tutorial | version | volume <1-100>>`);
+            ChatLib.chat(`${Settings.chatPrefix}&f/spot <copy | device | info | lyrics | open | pause | play | playfromid <id> | next | previous | search <query> <limit> | seek <time> | send <all/party/guild> | token | tutorial | version | volume <1-100>>`);
             break;
         case "search":
             if (!arg[1] || !arg[2]) return showNotification(`${Settings.chatPrefix}`, `&c&l✖&r &7Invalid usage.\n&c/spot search <limit> <query>&7.`, "push", 3);
@@ -185,8 +186,13 @@ register("command", (...arg) => {
                 ChatLib.command(`ac I'm listening to: ${state.currentSongInfo.name} by ${state.currentSongInfo.artists.join(", ")} on /ct import SpotPlaying.`)
             }
             break;
+        case "lyrics":
+            if (!state.lyrics || state.lyrics.length === 0) return ChatLib.chat(`${Settings.chatPrefix}&cNo lyrics loaded.`);
+            ChatLib.chat(`${Settings.chatPrefix}Lyrics:`);
+            state.lyrics.forEach((line, index) => { ChatLib.chat(`&7[${index}] &f${line.time}ms - ${line.text}`); });
+            break;
         default:
-            ChatLib.chat(`${Settings.chatPrefix}&cInvalid command.\n&7Usage: /spot <copy | device | info | open | version | pause | play | playfromid <id> | next | previous | search <query> <limit> | seek <time> | send <all/party/guild> | token | tutorial | volume <1-100>>`);
+            ChatLib.chat(`${Settings.chatPrefix}&cInvalid command.\n&7Usage: /spot <copy | device | info | lyrics | open | pause | play | playfromid <id> | next | previous | search <query> <limit> | seek <time> | send <all/party/guild> | token | tutorial | version | volume <1-100>>`);
     }
 }).setName("spotplaying").setAliases("spotifyplaying", "spot", "spotify", "playingspot", "playingspotify");
 
