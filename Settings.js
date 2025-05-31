@@ -133,15 +133,16 @@ class Settings {
         category: "Now Playing",
         subcategory: "- Toggles -"
     })
-    npLyrics = false;
+    npLyrics = true;
 
-    @CheckboxProperty({
-        name: "&e&oHighlight Song Lyrics",
-        description: "&7Toggles if song lyrics are highlighted when they are said.\n&8The accuracy of this depends on the song.",
+    @SelectorProperty({
+        name: "&e&oLyric Animation",
+        description: "&7Changes how the lyrics are rendered on the overlay.",
         category: "Now Playing",
-        subcategory: "- Toggles -"
+        subcategory: "- Toggles -",
+        options: ["Plain", "Highlight Lyric", "Fall into Place", "Fall into Place + Explosion"]
     })
-    npBetterLyrics = false;
+    npLyricAnimation = 0;
 
     @CheckboxProperty({
         name: "&e&oShorten Song Lyrics",
@@ -213,6 +214,15 @@ class Settings {
     })
     npBarText = "&a{minutes}:{seconds} / {endminutes}:{endseconds}";
 
+    @TextProperty({
+        name: "&e&oLyric Text",
+        description: "Use the placeholder &f{lyric} &7to replace itself with the current line of lyrics.",
+        category: "Now Playing",
+        placeholder: "Enter Text..",
+        subcategory: "Configuration"
+    })
+    npLyricText = "{lyric}";
+
     @SliderProperty({
         name: "Overlay Size",
         description: "The size of the Overlay.\n&8Text size is not changed. 50 is the default.",
@@ -270,6 +280,22 @@ class Settings {
     })
     npBarOpacity = 200;
 
+    @TextProperty({
+        name: "&e&oSong Lyrics Explosion Strength",
+        description: "The velocity applied to each character during an explosion.\n&8Default: 0.5",
+        category: "Now Playing",
+        subcategory: "Configuration"
+    })
+    npLyricExplosionStrength = "0.5";
+
+    @TextProperty({
+        name: "&e&oSong Lyrics Explosion Gravity",
+        description: "The gravity applied to each character during an explosion.\n&8Default: 0.0005",
+        category: "Now Playing",
+        subcategory: "Configuration"
+    })
+    npLyricGravity = "0.0005";
+
     @CheckboxProperty({
         name: "Text Shadows",
         description: "&7Toggles if the text in the overlay has shadows.",
@@ -295,9 +321,12 @@ class Settings {
         this.addDependency("&e&oSnap Size", "Overlay Enabled");
         this.addDependency("&e&oProgress Bar Color", "Progress Bar");
         this.addDependency("&e&oProgress Bar Text", "Progress Bar");
+        this.addDependency("&e&oLyric Text", "Song Lyrics");
         this.addDependency("&e&oProgress Bar Opacity", "Progress Bar");
-        this.addDependency("&e&oHighlight Song Lyrics", "Song Lyrics");
+        this.addDependency("&e&oLyric Animation", "Song Lyrics");
         this.addDependency("&e&oShorten Song Lyrics", "Song Lyrics");
+        this.addDependency("&e&oSong Lyrics Explosion Strength", "Song Lyrics");
+        this.addDependency("&e&oSong Lyrics Explosion Gravity", "Song Lyrics");
         this.setCategoryDescription("Now Playing", "&c&l!&r &7First time? Please run &a/spot tutorial &7before modifying options. &c&l!&r\nOptions titled &e&olike this&r require another feature to be enabled.");
         this.setCategoryDescription("Settings", "&7A module by &atdarth &7and &2Github Copilot&7.\n&c&lDo not share these tokens with anyone!&r");
     }

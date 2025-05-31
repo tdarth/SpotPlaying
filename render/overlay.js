@@ -14,6 +14,18 @@ let oldImageSetting = Settings.npImageQuality;
 
 const settingsGui = Java.type("gg.essential.vigilance.gui.SettingsGui");
 
+const letterAnimState = {};
+const poppedLetters = [];
+
+function isLetterOffScreen(letter, screenWidth, screenHeight) {
+    return (
+        letter.x < -letter.width ||
+        letter.x > screenWidth + letter.width ||
+        letter.y < -20 ||
+        letter.y > screenHeight + 20
+    );
+}
+
 function shortenTextToFitWithHighlight(text, maxWidth, currentTimeMs, lyrics, currentLine) {
     const ellipsis = "...";
     let shortenedText = text;
@@ -203,58 +215,183 @@ export function displaySongInfo(x, y) {
         const lyricY = y + padding + 3 * (lineHeight + lineSpacing) +
             (Settings.npProgressBar ? 30 * Settings.npSizeMultiplier / 50 + progressBarHeight + lineSpacing : 15 * Settings.npSizeMultiplier / 50);
 
-        if (Settings.npBetterLyrics) {
-            const lyricText = state.lyrics[currentLine]?.text ?? "";
-            if (!lyricText) return;
+        const lyricText = state.lyrics[currentLine]?.text ?? "";
 
-            const lyricWords = lyricText.split(' ');
+        function getShortenedLyric(str, maxWidth) {
+            if (!Settings.npShortenLyrics) return str;
+            if (Renderer.getStringWidth(str) <= maxWidth) return str;
+            const stripped = str.removeFormatting ? str.removeFormatting() : str.replace(/§./g, "");
+            return shortenTextToFit(stripped, maxWidth);
+        }
 
-            const lineStartTime = state.lyrics[currentLine].time;
-            const lineEndTime = state.lyrics[currentLine + 1]?.time ?? (lineStartTime + 4000);
-            const lineDuration = lineEndTime - lineStartTime;
-
-            const wordWeights = lyricWords.map(w => w.length);
-            const totalWeight = wordWeights.reduce((a, b) => a + b, 0);
-
-            let highlightedLyrics = "";
-            let elapsed = 0;
-
-            for (let i = 0; i < lyricWords.length; i++) {
-                const word = lyricWords[i];
-                const weight = wordWeights[i];
-                const wordDuration = (weight / totalWeight) * lineDuration;
-
-                const wordStartTime = lineStartTime + elapsed;
-                const wordEndTime = wordStartTime + wordDuration;
-
-                const color = (currentTimeMs >= wordStartTime && currentTimeMs < wordEndTime) ? "&f" : "&7";
-                highlightedLyrics += color + word + " ";
-
-                elapsed += wordDuration;
+        switch (Settings.npLyricAnimation) {
+            case 0: {
+                if (!lyricText) break;
+                let displayLyric = lyricText;
+                if (Settings.npShortenLyrics && Renderer.getStringWidth(displayLyric) > boxWidth - 10) {
+                    displayLyric = getShortenedLyric(displayLyric, boxWidth - 10);
+                }
+                let lyricTemplate = Settings.npLyricText || "{lyric}";
+                let renderedLyric = lyricTemplate.replaceAll("{lyric}", displayLyric);
+                const lyricX = x + (boxWidth - Renderer.getStringWidth(renderedLyric)) / 2;
+                Renderer.drawString(renderedLyric, lyricX, lyricY, Settings.npTextShadow);
+                break;
             }
+            case 1: {
+                if (!lyricText) break;
+                const lyricWords = lyricText.split(' ');
+                const lineStartTime = state.lyrics[currentLine].time;
+                const lineEndTime = state.lyrics[currentLine + 1]?.time ?? (lineStartTime + 4000);
+                const lineDuration = lineEndTime - lineStartTime;
+                const wordWeights = lyricWords.map(w => w.length);
+                const totalWeight = wordWeights.reduce((a, b) => a + b, 0);
 
-            let finalLyrics = highlightedLyrics;
-
-            if (Settings.npShortenLyrics && Renderer.getStringWidth(finalLyrics) > boxWidth - 10) {
-                const stripped = finalLyrics.removeFormatting();
-                const shortened = shortenTextToFitWithHighlight(stripped, boxWidth - 10, currentTimeMs, state.lyrics, currentLine);
-                finalLyrics = shortened;
+                let highlightedLyrics = "";
+                let elapsed = 0;
+                for (let i = 0; i < lyricWords.length; i++) {
+                    const word = lyricWords[i];
+                    const weight = wordWeights[i];
+                    const wordDuration = (weight / totalWeight) * lineDuration;
+                    const wordStartTime = lineStartTime + elapsed;
+                    const wordEndTime = wordStartTime + wordDuration;
+                    const color = (currentTimeMs >= wordStartTime && currentTimeMs < wordEndTime) ? "&f" : "&7";
+                    highlightedLyrics += color + word + " ";
+                    elapsed += wordDuration;
+                }
+                let finalLyrics = highlightedLyrics.trim();
+                if (Settings.npShortenLyrics && Renderer.getStringWidth(finalLyrics) > boxWidth - 10) {
+                    const stripped = finalLyrics.removeFormatting ? finalLyrics.removeFormatting() : finalLyrics.replace(/§./g, "");
+                    finalLyrics = shortenTextToFitWithHighlight(stripped, boxWidth - 10, currentTimeMs, state.lyrics, currentLine);
+                }
+                let lyricTemplate = Settings.npLyricText || "{lyric}";
+                let renderedLyric = lyricTemplate.replaceAll("{lyric}", finalLyrics);
+                const lyricX = x + (boxWidth - Renderer.getStringWidth(renderedLyric)) / 2;
+                Renderer.drawString(renderedLyric, lyricX, lyricY, Settings.npTextShadow);
+                break;
             }
+            case 2:
+            case 3: {
+                const lineStartTime = state.lyrics[currentLine].time;
+                const lineEndTime = state.lyrics[currentLine + 1]?.time ?? (lineStartTime + 4000);
+                const lineDuration = lineEndTime - lineStartTime;
+                const animBuffer = 350;
+                const effectiveDuration = Math.max(1, lineDuration - animBuffer);
+                const elapsed = Math.max(0, state.localProgress - lineStartTime);
 
-            const lyricX = x + (boxWidth - Renderer.getStringWidth(finalLyrics)) / 2;
-            Renderer.drawString(finalLyrics, lyricX, lyricY, Settings.npTextShadow);
-        } else {
-            const lyricText = state.lyrics[currentLine]?.text ?? "";
-            if (!lyricText) return;
+                const fullLyric = lyricText;
+                let displayLyric = lyricText;
+                if (Settings.npShortenLyrics && Renderer.getStringWidth(displayLyric) > boxWidth - 10) {
+                    displayLyric = getShortenedLyric(displayLyric, boxWidth - 10);
+                }
 
-            let finalText = lyricText;
+                let charsToShow = Math.floor((elapsed / effectiveDuration) * fullLyric.length);
+                charsToShow = Math.max(0, Math.min(charsToShow, fullLyric.length));
 
-            if (Settings.npShortenLyrics && Renderer.getStringWidth(finalText) > boxWidth - 10) {
-                finalText = shortenTextToFit(finalText, boxWidth - 10);
+                const animDuration = 180;
+                const initialYOffset = 12 * Settings.npSizeMultiplier / 50;
+                const animKey = `${state.currentSongInfo.name}|${currentLine}|${displayLyric}`;
+                const fullAnimKey = `${state.currentSongInfo.name}|${currentLine}|${fullLyric}`;
+                if (!letterAnimState[animKey]) letterAnimState[animKey] = {};
+                if (!letterAnimState[fullAnimKey]) letterAnimState[fullAnimKey] = {};
+
+                const doExplode = Settings.npLyricAnimation === 3;
+
+                const allFallen = (
+                    charsToShow === fullLyric.length &&
+                    Object.keys(letterAnimState[fullAnimKey]).length === fullLyric.length &&
+                    Object.values(letterAnimState[fullAnimKey]).every(anim => Date.now() - anim.appearTime >= animDuration)
+                );
+
+                if (!allFallen && charsToShow > 0 && lyricText) {
+                    let drawChars = Math.min(charsToShow, displayLyric.length);
+                    let baseLyric = displayLyric.substring(0, drawChars);
+                    let baseWidth = Renderer.getStringWidth(baseLyric);
+                    let drawX = x + (boxWidth - baseWidth) / 2;
+                    for (let i = 0; i < drawChars; i++) {
+                        const char = displayLyric[i];
+                        if (typeof char === "undefined") continue;
+                        if (!letterAnimState[animKey][i]) {
+                            letterAnimState[animKey][i] = { appearTime: Date.now(), pop: null };
+                        }
+                        const anim = letterAnimState[animKey][i];
+                        const appearTime = anim.appearTime;
+                        const timeSinceAppear = Math.min(Date.now() - appearTime, animDuration);
+                        const t = timeSinceAppear;
+                        const d = animDuration;
+                        let yOffset = initialYOffset * (1 - (t / d) * (t / d));
+                        let lyricTemplate = Settings.npLyricText || "{lyric}";
+                        let renderedChar = lyricTemplate.replaceAll("{lyric}", char);
+                        Renderer.drawString(renderedChar, drawX, lyricY - yOffset, Settings.npTextShadow);
+                        drawX += Renderer.getStringWidth(char);
+                    }
+                    for (let i = 0; i < Math.min(charsToShow, fullLyric.length); i++) {
+                        if (!letterAnimState[fullAnimKey][i]) {
+                            letterAnimState[fullAnimKey][i] = { appearTime: Date.now(), pop: null };
+                        }
+                    }
+                } else if (doExplode) {
+                    for (let i = 0; i < fullLyric.length; i++) {
+                        const char = fullLyric[i];
+                        if (typeof char === "undefined") continue;
+                        if (!letterAnimState[fullAnimKey][i]) continue;
+                        const anim = letterAnimState[fullAnimKey][i];
+                        if (!anim.pop) {
+                            const angle = Math.random() * Math.PI * 2;
+                            const speed = 0.2 + Math.random() * Settings.npLyricExplosionStrength;
+                            let charX = x + (boxWidth - Renderer.getStringWidth(fullLyric)) / 2;
+                            for (let j = 0; j < i; j++) {
+                                charX += Renderer.getStringWidth(fullLyric[j]);
+                            }
+                            anim.pop = {
+                                started: true,
+                                startTime: Date.now(),
+                                angle: angle,
+                                vx: Math.cos(angle) * speed,
+                                vy: Math.sin(angle) * speed,
+                                x: charX,
+                                y: lyricY,
+                                char: char,
+                                color: "&f",
+                                shadow: Settings.npTextShadow,
+                                width: Renderer.getStringWidth(char)
+                            };
+                            poppedLetters.push(anim.pop);
+                        }
+                    }
+                } else if (lyricText) {
+                    let lyricTemplate = Settings.npLyricText || "{lyric}";
+                    let renderedLyric = lyricTemplate.replaceAll("{lyric}", displayLyric);
+                    Renderer.drawString(renderedLyric, x + (boxWidth - Renderer.getStringWidth(renderedLyric)) / 2, lyricY, Settings.npTextShadow);
+                }
+
+                if (doExplode) {
+                    const screenWidth = Renderer.screen.getWidth ? Renderer.screen.getWidth() : 500;
+                    const screenHeight = Renderer.screen.getHeight ? Renderer.screen.getHeight() : 300;
+                    const gravity = Settings.npLyricGravity;
+                    for (let j = poppedLetters.length - 1; j >= 0; j--) {
+                        const letter = poppedLetters[j];
+                        if (!letter.lastUpdate) letter.lastUpdate = Date.now();
+                        const now = Date.now();
+                        const deltaTime = now - letter.lastUpdate;
+                        letter.lastUpdate = now;
+                        letter.x += letter.vx * deltaTime;
+                        letter.y += letter.vy * deltaTime;
+                        letter.vy += gravity * deltaTime;
+                        let lyricTemplate = Settings.npLyricText || "{lyric}";
+                        let renderedChar = lyricTemplate.replaceAll("{lyric}", letter.char);
+                        Renderer.drawString(renderedChar, letter.x, letter.y, letter.shadow);
+                        if (isLetterOffScreen(letter, screenWidth, screenHeight)) {
+                            poppedLetters.splice(j, 1);
+                        }
+                    }
+                    for (const key in letterAnimState) {
+                        if (key !== fullAnimKey && Object.values(letterAnimState[key]).every(anim => anim.pop && !poppedLetters.some(l => l.char === anim.pop.char && Math.abs(l.x - anim.pop.x) < 1 && Math.abs(l.y - anim.pop.y) < 1))) {
+                            delete letterAnimState[key];
+                        }
+                    }
+                }
+                break;
             }
-
-            const lyricX = x + (boxWidth - Renderer.getStringWidth(finalText)) / 2;
-            Renderer.drawString(finalText, lyricX, lyricY, Settings.npTextShadow);
         }
     }
 }
